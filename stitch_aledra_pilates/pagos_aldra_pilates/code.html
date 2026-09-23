@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Aldra Pilates - Pagos</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Playfair+Display:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#ffb4a9",
+                        "surface-bright": "#423635",
+                        "inverse-on-surface": "#392e2c",
+                        "surface-tint": "#ffb4a9",
+                        "outline": "#a48b87",
+                        "surface-dim": "#1a1110",
+                        "on-surface-variant": "#dcc0bc",
+                        "tertiary-container": "#34c09b",
+                        "error-container": "#93000a",
+                        "on-primary-fixed-variant": "#7f2920",
+                        "on-secondary-fixed": "#281801",
+                        "on-secondary": "#402d10",
+                        "background": "#1a1110",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-container": "#004938",
+                        "surface-container": "#271d1c",
+                        "primary-fixed": "#ffdad5",
+                        "surface": "#1a1110",
+                        "on-secondary-container": "#d2b48c",
+                        "primary-container": "#ff8a7a",
+                        "on-background": "#f1dedb",
+                        "secondary": "#e1c299",
+                        "on-error": "#690005",
+                        "on-tertiary-fixed": "#002118",
+                        "outline-variant": "#56423f",
+                        "tertiary-fixed-dim": "#58dcb5",
+                        "surface-container-low": "#231918",
+                        "on-primary-fixed": "#410000",
+                        "inverse-primary": "#9f4035",
+                        "on-tertiary-fixed-variant": "#00513f",
+                        "inverse-surface": "#f1dedb",
+                        "surface-container-high": "#322726",
+                        "tertiary": "#58dcb6",
+                        "primary-fixed-dim": "#ffb4a9",
+                        "on-tertiary": "#00382a",
+                        "tertiary-fixed": "#77f9d1",
+                        "surface-container-lowest": "#150c0b",
+                        "on-surface": "#f1dedb",
+                        "surface-container-highest": "#3e3230",
+                        "on-secondary-fixed-variant": "#584324",
+                        "on-primary": "#61120c",
+                        "secondary-fixed-dim": "#e1c299",
+                        "secondary-fixed": "#feddb3",
+                        "surface-variant": "#3e3230",
+                        "secondary-container": "#5b4526",
+                        "on-primary-container": "#762219",
+                        "error": "#ffb4ab"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sidebar-collapsed": "80px",
+                        "gutter": "24px",
+                        "sidebar-width": "260px",
+                        "unit": "8px",
+                        "container-padding": "32px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "display-lg": ["Playfair Display"],
+                        "headline-lg": ["Playfair Display"],
+                        "headline-lg-mobile": ["Playfair Display"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "1", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.3", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "1.3", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "1.4", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #121212;
+            color: #f1dedb;
+        }
+        .table-row-hover:hover {
+            background-color: #1a1110;
+        }
+        .card-shadow {
+            box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md bg-background flex">
+<!-- SideNavBar -->
+<nav class="bg-surface-container dark:bg-surface-container w-sidebar-width h-screen sticky left-0 top-0 border-r border-outline-variant shadow-sm flex flex-col h-full py-container-padding hidden md:flex z-50">
+<div class="px-gutter mb-8">
+<h1 class="font-display-lg text-headline-md text-primary tracking-tight">ALDRA PILATES</h1>
+<p class="font-label-md text-label-md text-on-surface-variant mt-1">Wellness Studio</p>
+</div>
+<button class="mx-4 mb-8 bg-primary-container text-[#121212] font-label-md text-label-md py-3 px-4 rounded flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+            New Session
+        </button>
+<ul class="flex-1 space-y-1">
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors duration-200 cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors duration-200 cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md text-label-md">Clients</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors duration-200 cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span class="font-label-md text-label-md">Plans</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-primary bg-surface-container-high border-l-4 border-primary hover:bg-surface-container-highest transition-colors duration-200 cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
+<span class="font-label-md text-label-md">Payments</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors duration-200 cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">event_available</span>
+<span class="font-label-md text-label-md">Attendance</span>
+</a>
+</li>
+</ul>
+<div class="mt-auto border-t border-outline-variant pt-4">
+<ul class="space-y-1">
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors duration-200 cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors duration-200 cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md text-label-md">Logout</span>
+</a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="bg-background dark:bg-background full-width sticky top-0 z-40 border-b border-outline-variant flex justify-between items-center h-16 px-gutter w-full md:hidden">
+<h1 class="font-display-lg text-headline-md text-primary">Aldra Pilates</h1>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<button class="hover:text-primary transition-all"><span class="material-symbols-outlined">notifications</span></button>
+<button class="hover:text-primary transition-all"><span class="material-symbols-outlined">calendar_today</span></button>
+</div>
+</header>
+<div class="p-container-padding flex-1">
+<div class="flex justify-between items-end mb-8">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-2">Pagos</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Gestión de ingresos y control de pagos</p>
+</div>
+<button class="bg-primary-container text-[#121212] font-label-md text-label-md py-3 px-6 rounded flex items-center gap-2 hover:opacity-90 transition-opacity card-shadow">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+                    Registrar pago
+                </button>
+</div>
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-8">
+<div class="bg-[#1E1E1E] rounded-lg p-6 border border-[#2A2A2A] card-shadow relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-10 text-primary">
+<span class="material-symbols-outlined text-6xl">account_balance_wallet</span>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant mb-2 uppercase tracking-wider">Ingresos del mes</p>
+<p class="font-headline-lg text-headline-lg text-on-surface">$12,450.00</p>
+<div class="mt-4 flex items-center gap-2 text-[#2ECC71] font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span>+15% vs mes anterior</span>
+</div>
+</div>
+<div class="bg-[#1E1E1E] rounded-lg p-6 border border-[#2A2A2A] card-shadow relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-10 text-secondary">
+<span class="material-symbols-outlined text-6xl">pending_actions</span>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant mb-2 uppercase tracking-wider">Pagos pendientes</p>
+<p class="font-headline-lg text-headline-lg text-on-surface">14</p>
+<p class="mt-4 text-on-surface-variant font-label-sm text-label-sm">Total estimado: $3,200.00</p>
+</div>
+<div class="bg-[#1E1E1E] rounded-lg p-6 border border-[#2A2A2A] card-shadow relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-10 text-tertiary">
+<span class="material-symbols-outlined text-6xl">check_circle</span>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant mb-2 uppercase tracking-wider">Pagos realizados</p>
+<p class="font-headline-lg text-headline-lg text-on-surface">86</p>
+<div class="mt-4 w-full bg-[#2A2A2A] h-[6px] rounded-full overflow-hidden">
+<div class="bg-gradient-to-r from-primary-container to-secondary-container h-full rounded-full" style="width: 85%"></div>
+</div>
+</div>
+</div>
+<!-- Controls -->
+<div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+<div class="relative w-full md:w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full bg-[#1E1E1E] border border-[#333333] rounded-lg py-2 pl-10 pr-4 text-on-surface font-body-md text-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors" placeholder="Buscar cliente o concepto..." type="text"/>
+</div>
+<div class="flex gap-4 w-full md:w-auto">
+<button class="bg-transparent border border-secondary text-secondary font-label-md text-label-md py-2 px-4 rounded flex items-center gap-2 hover:bg-surface-variant transition-colors flex-1 md:flex-none justify-center">
+<span class="material-symbols-outlined">filter_list</span>
+                        Filtros
+                    </button>
+<button class="bg-transparent text-on-surface font-label-md text-label-md py-2 px-4 rounded flex items-center gap-2 hover:bg-surface-variant transition-colors flex-1 md:flex-none justify-center">
+<span class="material-symbols-outlined">download</span>
+                        Exportar
+                    </button>
+</div>
+</div>
+<!-- Table -->
+<div class="bg-[#1E1E1E] rounded-lg border border-[#2A2A2A] card-shadow overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-[#2A2A2A] bg-surface-container-low">
+<th class="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Cliente</th>
+<th class="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Periodo</th>
+<th class="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Concepto</th>
+<th class="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Monto</th>
+<th class="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Método</th>
+<th class="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Fecha</th>
+<th class="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Estado</th>
+<th class="p-4"></th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface">
+<tr class="border-b border-[#2A2A2A] table-row-hover transition-colors">
+<td class="p-4 flex items-center gap-3">
+<img class="w-8 h-8 rounded-full object-cover border border-[#333333]" data-alt="A small, circular avatar portrait of a wellness client, neutral lighting, minimalist background, high resolution, dark mode aesthetic, premium feel." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDiwXiUl-7ZXP7IutkzZXaQNMmkOXGlLJRTTgM7zvRZ4EUNp0dLxUkVJkemaCWFukU3DBo41WESZFkhbg5p4QxTdu16rrM71kpRbFD8Zv-fNeuYPKgliDEMO6GOEIvrsr0-k-SnBkAj0ZNmW0YJikFIpQPDgULo0_jTGUvynWAwPwDwFXUHpQYIanPcBnMj2HuHmztAgvbOQzGyFhGdt2S0f0_kH03TMERNClM1dJup2-Wxxtpai2IL"/>
+<span>Elena Soto</span>
+</td>
+<td class="p-4 text-on-surface-variant">Octubre 2023</td>
+<td class="p-4">Plan Mensual Ilimitado</td>
+<td class="p-4 text-right font-medium">$1,200.00</td>
+<td class="p-4">Transferencia</td>
+<td class="p-4 text-on-surface-variant">02 Oct, 2023</td>
+<td class="p-4">
+<span class="bg-[rgba(46,204,113,0.1)] text-[#2ECC71] px-3 py-1 rounded-full font-label-sm text-label-sm inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                                    Pagado
+                                </span>
+</td>
+<td class="p-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<tr class="border-b border-[#2A2A2A] table-row-hover transition-colors">
+<td class="p-4 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant font-label-md text-label-md border border-[#333333]">
+                                    MR
+                                </div>
+<span>Martín Ríos</span>
+</td>
+<td class="p-4 text-on-surface-variant">Octubre 2023</td>
+<td class="p-4">Paquete 10 Clases</td>
+<td class="p-4 text-right font-medium">$850.00</td>
+<td class="p-4">-</td>
+<td class="p-4 text-on-surface-variant">Vence 05 Oct</td>
+<td class="p-4">
+<span class="bg-[rgba(210,180,140,0.1)] text-[#D2B48C] px-3 py-1 rounded-full font-label-sm text-label-sm inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+                                    Pendiente
+                                </span>
+</td>
+<td class="p-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<tr class="border-b border-[#2A2A2A] table-row-hover transition-colors">
+<td class="p-4 flex items-center gap-3">
+<img class="w-8 h-8 rounded-full object-cover border border-[#333333]" data-alt="A small, circular avatar portrait of a female wellness client looking calm, soft studio lighting, dark background, professional photography, modern aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCIlxNfZPr24oRmnniYI8CiEmGm0Ax7WHcoV5Xh2TXcOIyTe45lM299u7Tn5foE4shX-1hNmU7BIC11jIXOoIB6xaM9TwjE3Gy_FKJuTojAGgUL9bbTLrU_j3z41Vl0lhJtgeQ_iJdRiVQattv9WwSEkQAwz82_FAkyRShSi3K4I1vm8HzwGvGHVBPd6XtPla-tX66njhZuxutMArbS73uh8zqtZLqh7JiSq9ZinBD-g0FCzeyyr62B"/>
+<span>Sofía Vergara</span>
+</td>
+<td class="p-4 text-on-surface-variant">Septiembre 2023</td>
+<td class="p-4">Clase Privada</td>
+<td class="p-4 text-right font-medium">$350.00</td>
+<td class="p-4">Efectivo</td>
+<td class="p-4 text-on-surface-variant">28 Sep, 2023</td>
+<td class="p-4">
+<span class="bg-[rgba(46,204,113,0.1)] text-[#2ECC71] px-3 py-1 rounded-full font-label-sm text-label-sm inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                                    Pagado
+                                </span>
+</td>
+<td class="p-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<tr class="border-b border-[#2A2A2A] table-row-hover transition-colors">
+<td class="p-4 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant font-label-md text-label-md border border-[#333333]">
+                                    JL
+                                </div>
+<span>Juan López</span>
+</td>
+<td class="p-4 text-on-surface-variant">Septiembre 2023</td>
+<td class="p-4">Plan Mensual Básico</td>
+<td class="p-4 text-right font-medium">$800.00</td>
+<td class="p-4">Débito</td>
+<td class="p-4 text-on-surface-variant">15 Sep, 2023</td>
+<td class="p-4">
+<span class="bg-[rgba(231,76,60,0.1)] text-[#E74C3C] px-3 py-1 rounded-full font-label-sm text-label-sm inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">cancel</span>
+                                    Anulado
+                                </span>
+</td>
+<td class="p-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<tr class="border-b border-[#2A2A2A] table-row-hover transition-colors">
+<td class="p-4 flex items-center gap-3">
+<img class="w-8 h-8 rounded-full object-cover border border-[#333333]" data-alt="A small, circular avatar portrait of a male client, athletic build, subtle dark mode lighting, premium wellness app style, high resolution." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_vR1zXLpPpGgwB1PPssDEoJbeP8ii7E9VaeAhL0UJtmCeav0MUuvyLZcujJcH_bCx9gAQlMsUKwzbY7G9G0bKJ2JErjZSJhUq2ybmM0YU5fdbG50pyOJDJOTl5VmHj6qS44qak9F3bX9VVLRr-Y03i1w7PYpa4cQ9TBi5Bho2lb2yNbK3JY0S1TeepoV258rV6_qdCe7GwT_g10Z12q2ggL4c5nJ4tqgotsT-v9AS5guNL1SVbZAF"/>
+<span>Carlos Mendoza</span>
+</td>
+<td class="p-4 text-on-surface-variant">Anual 2023</td>
+<td class="p-4">Suscripción Anual</td>
+<td class="p-4 text-right font-medium">$5,500.00</td>
+<td class="p-4">Crédito</td>
+<td class="p-4 text-on-surface-variant">10 Sep, 2023</td>
+<td class="p-4">
+<span class="bg-[rgba(210,180,140,0.1)] text-[#D2B48C] px-3 py-1 rounded-full font-label-sm text-label-sm inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">contrast</span>
+                                    Pago parcial
+                                </span>
+</td>
+<td class="p-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="p-4 border-t border-[#2A2A2A] flex justify-between items-center text-on-surface-variant font-label-sm text-label-sm">
+<span>Mostrando 1-5 de 42 resultados</span>
+<div class="flex gap-2">
+<button class="w-8 h-8 rounded border border-[#333333] flex items-center justify-center hover:bg-surface-variant transition-colors disabled:opacity-50"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+<button class="w-8 h-8 rounded border border-primary bg-[rgba(255,138,122,0.1)] text-primary flex items-center justify-center font-medium">1</button>
+<button class="w-8 h-8 rounded border border-[#333333] flex items-center justify-center hover:bg-surface-variant transition-colors">2</button>
+<button class="w-8 h-8 rounded border border-[#333333] flex items-center justify-center hover:bg-surface-variant transition-colors">3</button>
+<button class="w-8 h-8 rounded border border-[#333333] flex items-center justify-center hover:bg-surface-variant transition-colors"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>
