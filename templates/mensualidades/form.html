@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+<div class="form-page-wrap">
+    <a class="back-link" href="{% url 'mensualidades:list' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mensualidades</a>
+    <section class="page-intro-row form-page-heading">
+        <div>
+            <span class="section-eyebrow">Contratación mensual</span>
+            <h2>{{ form_title }}</h2>
+            <p>Elige la clienta, el plan y el período contratado.</p>
+        </div>
+    </section>
+
+    <form method="post" novalidate data-cliente-plan-form>
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="row g-4">
+            <div class="col-12 col-xl-8">
+                <section class="content-card client-form-card subscription-form-card">
+                    <div class="form-section-heading">
+                        <span class="form-section-icon"><i class="bi bi-person-vcard" aria-hidden="true"></i></span>
+                        <div><h3>Asignación</h3><p>Relaciona una clienta con el plan del catálogo</p></div>
+                    </div>
+                    <div class="row g-4">
+                        {% for field in form %}
+                            {% if field.name == 'cliente' or field.name == 'plan' %}
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}<span class="required-marker"> *</span></label>
+                                    {{ field }}
+                                    {% if field.help_text %}<div class="form-help-text">{{ field.help_text }}</div>{% endif %}
+                                    {% for error in field.errors %}<div class="invalid-feedback d-block" role="alert">{{ error }}</div>{% endfor %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <section class="content-card client-form-card subscription-form-card mt-4">
+                    <div class="form-section-heading">
+                        <span class="form-section-icon"><i class="bi bi-calendar3" aria-hidden="true"></i></span>
+                        <div><h3>Período y vigencia</h3><p>Evita duplicar una mensualidad para la misma clienta y período</p></div>
+                    </div>
+                    <div class="row g-4">
+                        {% for field in form %}
+                            {% if field.name == 'periodo_mes' or field.name == 'periodo_anio' or field.name == 'fecha_inicio' or field.name == 'fecha_fin' or field.name == 'estado' %}
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}<span class="required-marker"> *</span></label>
+                                    {{ field }}
+                                    {% for error in field.errors %}<div class="invalid-feedback d-block" role="alert">{{ error }}</div>{% endfor %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <section class="content-card client-form-card subscription-form-card mt-4">
+                    <div class="form-section-heading">
+                        <span class="form-section-icon"><i class="bi bi-percent" aria-hidden="true"></i></span>
+                        <div><h3>Descuento</h3><p>Ingresa un porcentaje; por ejemplo, 22 equivale a 22%.</p></div>
+                    </div>
+                    {% for field in form %}
+                        {% if field.name == 'descuento_porcentaje' %}
+                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% for error in field.errors %}<div class="invalid-feedback d-block" role="alert">{{ error }}</div>{% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                </section>
+            </div>
+            <div class="col-12 col-xl-4">
+                <aside class="content-card subscription-price-card" aria-live="polite">
+                    <span class="section-eyebrow">Resumen de precio</span>
+                    <h3>Precio acordado</h3>
+                    <dl>
+                        <div><dt>Precio del plan</dt><dd id="subscription-base-price">—</dd></div>
+                        <div><dt>Descuento</dt><dd id="subscription-discount">0%</dd></div>
+                    </dl>
+                    <div class="subscription-final-price">
+                        <span>Precio final</span>
+                        <strong id="subscription-final-price">—</strong>
+                    </div>
+                    <p>El monto final se calcula y valida al guardar la mensualidad.</p>
+                </aside>
+            </div>
+        </div>
+        <div class="form-actions">
+            <a class="btn btn-outline-light" href="{% url 'mensualidades:list' %}">Cancelar</a>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-check2" aria-hidden="true"></i> Guardar mensualidad</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+{% block extra_js %}<script src="{% load static %}{% static 'js/mensualidades.js' %}"></script>{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+<div class="form-page-wrap">
+    <a class="back-link" href="{% if object %}{% url 'clientes:detail' object.pk %}{% else %}{% url 'clientes:list' %}{% endif %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a {% if object %}la ficha{% else %}clientes{% endif %}</a>
+    <section class="page-intro-row form-page-heading">
+        <div>
+            <span class="section-eyebrow">Ficha de clienta</span>
+            <h2>{{ form_title }}</h2>
+            <p>Completa la información básica. Los campos con * son obligatorios.</p>
+        </div>
+    </section>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+        <section class="content-card client-form-card">
+            <div class="form-section-heading">
+                <span class="form-section-icon"><i class="bi bi-person-vcard" aria-hidden="true"></i></span>
+                <div><h3>Datos personales</h3><p>Identificación y medios de contacto</p></div>
+            </div>
+            <div class="row g-4">
+                {% for field in form %}
+                    <div class="col-12{% if field.name != 'observaciones' %} col-md-6{% endif %}">
+                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="required-marker"> *</span>{% endif %}</label>
+                        {{ field }}
+                        {% if field.help_text %}<div class="form-help-text">{{ field.help_text }}</div>{% endif %}
+                        {% for error in field.errors %}<div class="invalid-feedback d-block" role="alert">{{ error }}</div>{% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+        <div class="form-actions">
+            <a class="btn btn-outline-light" href="{% if object %}{% url 'clientes:detail' object.pk %}{% else %}{% url 'clientes:list' %}{% endif %}">Cancelar</a>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-check2" aria-hidden="true"></i> Guardar clienta</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

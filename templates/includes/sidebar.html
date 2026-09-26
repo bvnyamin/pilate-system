@@ -1,0 +1,15 @@
+<aside class="app-sidebar d-none d-lg-flex" aria-label="Navegación principal">
+    {% include "includes/sidebar_nav.html" %}
+</aside>
+<div class="offcanvas offcanvas-start app-sidebar app-sidebar-mobile" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
+    <div class="offcanvas-header sidebar-mobile-header">
+        <div>
+            <span class="brand-name" id="mobileSidebarLabel">ALDRA PILATES</span>
+            <span class="brand-subtitle">Wellness Studio</span>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar navegación"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+        {% include "includes/sidebar_nav.html" with hide_brand=True %}
+    </div>
+</div>

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load clientes_formatters %}
+{% block title %}{{ cliente }}{% endblock %}
+{% block content %}
+<a class="back-link" href="{% url 'clientes:list' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a clientes</a>
+<section class="client-profile-header">
+    <div class="client-profile-identity">
+        <div class="client-profile-avatar" aria-hidden="true">{{ cliente.nombres|first|upper }}{{ cliente.apellidos|first|upper }}</div>
+        <div>
+            <span class="section-eyebrow">Ficha de clienta</span>
+            <h2>{{ cliente.nombres }} {{ cliente.apellidos }}</h2>
+            <div class="client-profile-contact">
+                <span><i class="bi bi-person-badge" aria-hidden="true"></i>{{ cliente.rut|format_rut }}</span>
+                {% if cliente.telefono %}<span><i class="bi bi-telephone" aria-hidden="true"></i>{{ cliente.telefono }}</span>{% endif %}
+                {% if cliente.email %}<span><i class="bi bi-envelope" aria-hidden="true"></i>{{ cliente.email }}</span>{% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="client-profile-actions">
+        <span class="status-badge status-{{ cliente.estado }}">{{ cliente.get_estado_display }}</span>
+        <a class="btn btn-outline-light" href="{% url 'clientes:update' cliente.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</a>
+    </div>
+</section>
+
+<nav class="client-detail-tabs" aria-label="Secciones de la ficha">
+    <a class="active" href="#resumen" aria-current="page">Resumen</a>
+    <span aria-disabled="true" title="Disponible al implementar mensualidades">Planes</span>
+    <span aria-disabled="true" title="Disponible al implementar pagos">Pagos</span>
+    <span aria-disabled="true" title="Disponible al implementar asistencias">Asistencias</span>
+</nav>
+
+<section class="row g-4" id="resumen">
+    <div class="col-xl-8">
+        <article class="content-card profile-info-card">
+            <div class="card-heading-row"><div><span class="section-eyebrow">Resumen</span><h3>Información personal</h3></div></div>
+            <dl class="profile-data-grid">
+                <div><dt>Nombre completo</dt><dd>{{ cliente.nombres }} {{ cliente.apellidos }}</dd></div>
+                <div><dt>RUT</dt><dd>{{ cliente.rut|format_rut }}</dd></div>
+                <div><dt>Correo electrónico</dt><dd>{{ cliente.email|default:"No informado" }}</dd></div>
+                <div><dt>Teléfono</dt><dd>{{ cliente.telefono|default:"No informado" }}</dd></div>
+                <div><dt>Fecha de nacimiento</dt><dd>{% if cliente.fecha_nacimiento %}{{ cliente.fecha_nacimiento|date:"d/m/Y" }}{% else %}No informada{% endif %}</dd></div>
+                <div><dt>Fecha de incorporación</dt><dd>{{ cliente.fecha_incorporacion|date:"d/m/Y" }}</dd></div>
+            </dl>
+            {% if cliente.observaciones %}
+                <div class="profile-notes"><h4>Observaciones</h4><p>{{ cliente.observaciones|linebreaksbr }}</p></div>
+            {% endif %}
+        </article>
+    </div>
+    <div class="col-xl-4">
+        <article class="content-card profile-status-card">
+            <span class="section-eyebrow">Estado de la relación</span>
+            <h3>Estado de clienta</h3>
+            <p>Las clientas inactivas se conservan en el historial y se pueden reactivar en cualquier momento.</p>
+            <form method="post" action="{% url 'clientes:set_status' cliente.pk %}">
+                {% csrf_token %}
+                {% if cliente.estado == "activa" %}
+                    <input type="hidden" name="estado" value="inactiva">
+                    <button class="btn btn-outline-light w-100" type="submit"><i class="bi bi-pause-circle" aria-hidden="true"></i> Marcar inactiva</button>
+                {% else %}
+                    <input type="hidden" name="estado" value="activa">
+                    <button class="btn btn-primary w-100" type="submit"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Reactivar clienta</button>
+                {% endif %}
+            </form>
+            <div class="profile-record-date"><i class="bi bi-clock-history" aria-hidden="true"></i><span>Ficha creada {{ cliente.created_at|date:"d/m/Y" }}</span></div>
+        </article>
+    </div>
+</section>
+{% endblock %}

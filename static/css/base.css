@@ -1,0 +1,14 @@
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body { margin: 0; background: radial-gradient(circle at 75% -10%, rgba(255, 138, 122, 0.08), transparent 30%), var(--aldra-bg); color: var(--aldra-text); font-family: "Inter", sans-serif; font-size: 0.95rem; }
+a { color: inherit; }
+button, input, select, textarea { font: inherit; }
+.app-shell { display: flex; min-height: 100vh; }
+.app-main { min-width: 0; flex: 1; margin-left: var(--aldra-sidebar-width); }
+.app-content { width: 100%; max-width: 1600px; margin-inline: auto; padding: 32px; }
+h1, h2, h3, h4, p { margin-top: 0; }
+h2, h3, h4 { color: var(--aldra-text); }
+h2 { font-family: "Playfair Display", serif; font-size: clamp(2rem, 4vw, 2.75rem); font-weight: 500; }
+h3 { font-size: 1.25rem; font-weight: 600; }
+.btn-primary { --bs-btn-color: #241312; --bs-btn-bg: var(--aldra-primary); --bs-btn-border-color: var(--aldra-primary); --bs-btn-hover-color: #150c0b; --bs-btn-hover-bg: #ff9d90; --bs-btn-hover-border-color: #ff9d90; --bs-btn-active-color: #150c0b; --bs-btn-active-bg: #ffafa4; --bs-btn-active-border-color: #ffafa4; --bs-btn-disabled-color: #241312; --bs-btn-disabled-bg: var(--aldra-primary); --bs-btn-disabled-border-color: var(--aldra-primary); border-radius: var(--aldra-radius-sm); font-weight: 600; }
+:focus-visible { outline: 3px solid rgba(255, 180, 169, 0.55); outline-offset: 2px; }

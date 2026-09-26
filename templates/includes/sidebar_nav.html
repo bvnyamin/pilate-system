@@ -1,0 +1,37 @@
+<div class="sidebar-inner">
+    {% if not hide_brand %}
+        <a class="brand" href="{% url 'dashboard:index' %}" aria-label="Aldra Pilates, ir al dashboard">
+            <span class="brand-name">ALDRA PILATES</span>
+            <span class="brand-subtitle">Wellness Studio</span>
+        </a>
+    {% endif %}
+    <button class="btn btn-primary sidebar-action" type="button" disabled title="Disponible en una próxima etapa">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> Nueva sesión
+    </button>
+    <nav class="sidebar-nav" aria-label="Módulos administrativos">
+        <a class="sidebar-link{% if request.resolver_match.namespace == 'dashboard' %} active{% endif %}" href="{% url 'dashboard:index' %}"{% if request.resolver_match.namespace == 'dashboard' %} aria-current="page"{% endif %}>
+            <i class="bi bi-grid-1x2" aria-hidden="true"></i><span>Dashboard</span>
+        </a>
+        <a class="sidebar-link{% if request.resolver_match.namespace == 'clientes' %} active{% endif %}" href="{% url 'clientes:list' %}"{% if request.resolver_match.namespace == 'clientes' %} aria-current="page"{% endif %}>
+            <i class="bi bi-people" aria-hidden="true"></i><span>Clientes</span>
+        </a>
+        <a class="sidebar-link{% if request.resolver_match.namespace == 'planes' %} active{% endif %}" href="{% url 'planes:list' %}"{% if request.resolver_match.namespace == 'planes' %} aria-current="page"{% endif %}>
+            <i class="bi bi-activity" aria-hidden="true"></i><span>Planes</span>
+        </a>
+        <a class="sidebar-link{% if request.resolver_match.namespace == 'mensualidades' %} active{% endif %}" href="{% url 'mensualidades:list' %}"{% if request.resolver_match.namespace == 'mensualidades' %} aria-current="page"{% endif %}>
+            <i class="bi bi-calendar2-month" aria-hidden="true"></i><span>Mensualidades</span>
+        </a>
+        <a class="sidebar-link{% if request.resolver_match.namespace == 'pagos' %} active{% endif %}" href="{% url 'pagos:list' %}"{% if request.resolver_match.namespace == 'pagos' %} aria-current="page"{% endif %}>
+            <i class="bi bi-credit-card" aria-hidden="true"></i><span>Pagos</span>
+        </a>
+        <span class="sidebar-link is-disabled" aria-disabled="true"><i class="bi bi-calendar2-check" aria-hidden="true"></i><span>Asistencias</span></span>
+        <span class="sidebar-link is-disabled" aria-disabled="true"><i class="bi bi-bar-chart" aria-hidden="true"></i><span>Reportes</span></span>
+    </nav>
+    <div class="sidebar-footer">
+        <span class="sidebar-link is-disabled" aria-disabled="true"><i class="bi bi-gear" aria-hidden="true"></i><span>Configuración</span></span>
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button class="sidebar-link sidebar-logout" type="submit"><i class="bi bi-box-arrow-right" aria-hidden="true"></i><span>Cerrar sesión</span></button>
+        </form>
+    </div>
+</div>

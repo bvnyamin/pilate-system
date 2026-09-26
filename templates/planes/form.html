@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+<div class="form-page-wrap">
+    <a class="back-link" href="{% url 'planes:list' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a planes</a>
+    <section class="page-intro-row form-page-heading">
+        <div>
+            <span class="section-eyebrow">Catálogo del estudio</span>
+            <h2>{{ form_title }}</h2>
+            <p>Define las clases incluidas y el precio mensual en pesos chilenos.</p>
+        </div>
+    </section>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+        <section class="content-card client-form-card">
+            <div class="form-section-heading">
+                <span class="form-section-icon"><i class="bi bi-activity" aria-hidden="true"></i></span>
+                <div><h3>Detalles del plan</h3><p>Información que verá el equipo al contratar una mensualidad</p></div>
+            </div>
+            <div class="row g-4">
+                {% for field in form %}
+                    <div class="col-12{% if field.name == 'nombre' or field.name == 'estado' %} col-md-6{% endif %}">
+                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="required-marker"> *</span>{% endif %}</label>
+                        {{ field }}
+                        {% if field.name == 'precio_lista_clp' %}<div class="form-help-text">Ingresa el monto en pesos, sin puntos ni decimales.</div>{% endif %}
+                        {% if field.help_text %}<div class="form-help-text">{{ field.help_text }}</div>{% endif %}
+                        {% for error in field.errors %}<div class="invalid-feedback d-block" role="alert">{{ error }}</div>{% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+        <div class="form-actions">
+            <a class="btn btn-outline-light" href="{% url 'planes:list' %}">Cancelar</a>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-check2" aria-hidden="true"></i> Guardar plan</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

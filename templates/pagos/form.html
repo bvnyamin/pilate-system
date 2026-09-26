@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+<div class="form-page-wrap">
+    <a class="back-link" href="{% url 'pagos:list' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a pagos</a>
+    <section class="page-intro-row form-page-heading">
+        <div>
+            <span class="section-eyebrow">Movimiento financiero</span>
+            <h2>{{ form_title }}</h2>
+            <p>Registra el importe de este movimiento y vincúlalo a una mensualidad.</p>
+        </div>
+    </section>
+
+    <form method="post" novalidate data-payment-form>
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="row g-4">
+            <div class="col-12 col-xl-8">
+                <section class="content-card client-form-card payment-form-card">
+                    <div class="form-section-heading">
+                        <span class="form-section-icon"><i class="bi bi-credit-card" aria-hidden="true"></i></span>
+                        <div><h3>Detalle del movimiento</h3><p>Todo pago debe quedar asociado a una mensualidad del historial.</p></div>
+                    </div>
+                    <div class="row g-4">
+                        {% for field in form %}
+                            <div class="col-12{% if field.name == 'monto_clp' or field.name == 'metodo_pago' or field.name == 'fecha_pago' or field.name == 'estado_pago' %} col-md-6{% endif %}">
+                                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="required-marker"> *</span>{% endif %}</label>
+                                {{ field }}
+                                {% if field.help_text %}<div class="form-help-text">{{ field.help_text }}</div>{% endif %}
+                                {% for error in field.errors %}<div class="invalid-feedback d-block" role="alert">{{ error }}</div>{% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+            <div class="col-12 col-xl-4">
+                <aside class="content-card payment-context-card" aria-live="polite">
+                    <span class="section-eyebrow">Cuenta de la mensualidad</span>
+                    <h3 id="payment-context-title">Selecciona una mensualidad</h3>
+                    <p id="payment-context-plan" class="payment-context-plan">Elige una clienta y período para ver su estado.</p>
+                    <dl>
+                        <div><dt>Precio acordado</dt><dd id="payment-agreed-price">—</dd></div>
+                        <div><dt>Recibido antes</dt><dd id="payment-received-total">—</dd></div>
+                    </dl>
+                    <div class="payment-balance-line"><span>Saldo antes de este movimiento</span><strong id="payment-balance">—</strong></div>
+                    <p>Los pagos parciales se registran como movimientos separados. Los movimientos pendientes o anulados no reducen el saldo.</p>
+                </aside>
+            </div>
+        </div>
+        <div class="form-actions">
+            <a class="btn btn-outline-light" href="{% url 'pagos:list' %}">Cancelar</a>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-check2" aria-hidden="true"></i> Guardar movimiento</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/pagos.js' %}"></script>{% endblock %}

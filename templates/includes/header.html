@@ -1,0 +1,16 @@
+<header class="app-header">
+    <div class="header-title-group">
+        <button class="header-icon d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar" aria-label="Abrir navegación"><i class="bi bi-list" aria-hidden="true"></i></button>
+        <div>
+            <h1 class="header-title">{{ page_title|default:"Administración" }}</h1>
+            <p class="header-date mb-0" data-current-date></p>
+        </div>
+    </div>
+    <div class="header-actions">
+        <button class="header-icon d-none d-sm-grid" type="button" disabled aria-label="Notificaciones, próximamente"><i class="bi bi-bell" aria-hidden="true"></i></button>
+        <div class="header-user">
+            <span class="header-avatar" aria-hidden="true">{{ request.user.first_name|default:request.user.username|first|upper }}</span>
+            <span class="header-user-name d-none d-md-inline">{{ request.user.get_full_name|default:request.user.username }}</span>
+        </div>
+    </div>
+</header>

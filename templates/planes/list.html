@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load planes_formatters %}
+{% block title %}Planes{% endblock %}
+{% block content %}
+<section class="page-intro-row">
+    <div>
+        <span class="section-eyebrow">Catálogo del estudio</span>
+        <h2>Planes</h2>
+        <p>Administra las alternativas de clases mensuales y sus precios de lista.</p>
+    </div>
+    <a class="btn btn-primary page-primary-action" href="{% url 'planes:create' %}">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> Nuevo plan
+    </a>
+</section>
+
+<section class="content-card plan-list-card">
+    <div class="client-list-toolbar">
+        <div class="client-status-tabs" role="group" aria-label="Filtrar planes por estado">
+            <a class="status-tab{% if not selected_status %} active{% endif %}" href="{% url 'planes:list' %}{% if search_query %}?q={{ search_query|urlencode }}{% endif %}">Todos</a>
+            <a class="status-tab{% if selected_status == 'activo' %} active{% endif %}" href="?estado=activo{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}">Activos</a>
+            <a class="status-tab{% if selected_status == 'inactivo' %} active{% endif %}" href="?estado=inactivo{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}">Inactivos</a>
+        </div>
+        <form method="get" class="client-search" role="search">
+            {% if selected_status %}<input type="hidden" name="estado" value="{{ selected_status }}">{% endif %}
+            <label class="visually-hidden" for="plan-search-input">Buscar planes</label>
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input id="plan-search-input" type="search" name="q" value="{{ search_query }}" placeholder="Buscar por nombre o descripción…">
+            {% if search_query %}<a href="{% url 'planes:list' %}{% if selected_status %}?estado={{ selected_status }}{% endif %}" class="search-clear" aria-label="Limpiar búsqueda"><i class="bi bi-x-lg" aria-hidden="true"></i></a>{% endif %}
+        </form>
+    </div>
+
+    {% if planes %}
+        <div class="row g-4 plan-grid">
+            {% for plan in planes %}
+                <div class="col-12 col-md-6 col-xl-4">
+                    <article class="plan-card{% if plan.estado == 'inactivo' %} plan-card-inactive{% endif %}">
+                        <div class="plan-card-topline">
+                            <span class="plan-mark"><i class="bi bi-activity" aria-hidden="true"></i></span>
+                            <span class="status-badge status-{{ plan.estado }}">{{ plan.get_estado_display }}</span>
+                        </div>
+                        <span class="section-eyebrow">{{ plan.clases_por_mes }} clases mensuales</span>
+                        <h3>{{ plan.nombre }}</h3>
+                        <div class="plan-price">{{ plan.precio_lista_clp|clp }}</div>
+                        <div class="plan-price-caption">precio de lista mensual</div>
+                        <p class="plan-description">{{ plan.descripcion|default:"Plan mensual de clases de Pilates." }}</p>
+                        <div class="plan-card-actions">
+                            <a class="btn btn-outline-light" href="{% url 'planes:update' plan.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</a>
+                            <form method="post" action="{% url 'planes:set_status' plan.pk %}">
+                                {% csrf_token %}
+                                {% if plan.estado == 'activo' %}
+                                    <input type="hidden" name="estado" value="inactivo">
+                                    <button class="btn btn-quiet" type="submit" aria-label="Desactivar {{ plan.nombre }}">Desactivar</button>
+                                {% else %}
+                                    <input type="hidden" name="estado" value="activo">
+                                    <button class="btn btn-quiet" type="submit" aria-label="Activar {{ plan.nombre }}">Activar</button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </article>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="client-list-footer">
+            <span>{{ total_planes }} resultado{{ total_planes|pluralize:"s" }}</span>
+            {% if is_paginated %}
+                <nav class="pagination-nav" aria-label="Paginación de planes">
+                    {% if page_obj.has_previous %}<a href="?{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}{% if selected_status %}estado={{ selected_status }}&amp;{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Página anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>{% endif %}
+                    <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}<a href="?{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}{% if selected_status %}estado={{ selected_status }}&amp;{% endif %}page={{ page_obj.next_page_number }}" aria-label="Página siguiente"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>{% endif %}
+                </nav>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="client-empty-state">
+            <span class="empty-state-icon"><i class="bi bi-activity" aria-hidden="true"></i></span>
+            {% if search_query or selected_status %}
+                <h3>No encontramos planes</h3>
+                <p>Prueba con otro nombre o filtro de estado.</p>
+                <a class="btn btn-outline-light" href="{% url 'planes:list' %}">Ver todos los planes</a>
+            {% else %}
+                <h3>Aún no hay planes configurados</h3>
+                <p>Crea un plan para que el catálogo del estudio esté listo.</p>
+                <a class="btn btn-primary" href="{% url 'planes:create' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Crear primer plan</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

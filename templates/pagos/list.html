@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load planes_formatters %}
+{% block title %}Pagos{% endblock %}
+{% block content %}
+<section class="page-intro-row">
+    <div>
+        <span class="section-eyebrow">Movimientos financieros</span>
+        <h2>Pagos</h2>
+        <p>Consulta los abonos asociados a cada mensualidad y conserva su historial.</p>
+    </div>
+    <a class="btn btn-primary page-primary-action" href="{% url 'pagos:create' %}">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> Registrar pago
+    </a>
+</section>
+
+<section class="content-card payment-list-card">
+    <div class="payment-toolbar">
+        <div class="client-status-tabs" role="group" aria-label="Filtrar pagos por estado">
+            <a class="status-tab{% if not selected_status %} active{% endif %}" href="{% url 'pagos:list' %}{% if search_query or selected_method %}?{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}{% if selected_method %}metodo={{ selected_method }}{% endif %}{% endif %}">Todos</a>
+            {% for value, label in status_choices %}
+                <a class="status-tab{% if selected_status == value %} active{% endif %}" href="?estado={{ value }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}{% if selected_method %}&amp;metodo={{ selected_method }}{% endif %}">{{ label }}</a>
+            {% endfor %}
+        </div>
+        <form method="get" class="payment-filters" role="search">
+            {% if selected_status %}<input type="hidden" name="estado" value="{{ selected_status }}">{% endif %}
+            <label class="payment-search">
+                <span class="visually-hidden">Buscar pagos por clienta, concepto o plan</span>
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input type="search" name="q" value="{{ search_query }}" placeholder="Buscar clienta, concepto o plan…">
+            </label>
+            <label><span class="visually-hidden">Método de pago</span>
+                <select name="metodo" class="form-select" aria-label="Filtrar por método de pago">
+                    <option value="">Todos los métodos</option>
+                    {% for value, label in method_choices %}<option value="{{ value }}"{% if selected_method == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select>
+            </label>
+            <button class="btn btn-outline-light" type="submit">Filtrar</button>
+        </form>
+    </div>
+
+    {% if pagos %}
+        <div class="payment-grid">
+            {% for pago in pagos %}
+                <article class="payment-card">
+                    <div class="payment-card-heading">
+                        <div>
+                            <span class="section-eyebrow">{{ pago.fecha_pago|date:"d/m/Y" }}</span>
+                            <h3>{{ pago.cliente_plan.cliente.apellidos }}, {{ pago.cliente_plan.cliente.nombres }}</h3>
+                        </div>
+                        <span class="status-badge status-{{ pago.estado_pago }}">{{ pago.get_estado_pago_display }}</span>
+                    </div>
+                    <div class="payment-plan-line">
+                        <i class="bi bi-calendar2-month" aria-hidden="true"></i>
+                        <span>{{ pago.cliente_plan.plan.nombre }} · {{ pago.cliente_plan.periodo }}</span>
+                    </div>
+                    <p class="payment-concept">{{ pago.concepto }}</p>
+                    <dl class="payment-facts">
+                        <div><dt>Monto del movimiento</dt><dd class="payment-amount">{{ pago.monto_clp|clp }}</dd></div>
+                        <div><dt>Método</dt><dd>{{ pago.get_metodo_pago_display }}</dd></div>
+                    </dl>
+                    <div class="payment-card-actions">
+                        <a class="btn btn-outline-light" href="{% url 'pagos:update' pago.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</a>
+                        {% if pago.estado_pago != 'anulado' %}
+                            <form method="post" action="{% url 'pagos:set_status' pago.pk %}">
+                                {% csrf_token %}<input type="hidden" name="estado" value="anulado">
+                                <button class="btn btn-quiet" type="submit" aria-label="Anular pago de {{ pago.cliente_plan.cliente }} por {{ pago.monto_clp|clp }}">Anular movimiento</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+        <div class="client-list-footer">
+            <span>{{ total_pagos }} resultado{{ total_pagos|pluralize:"s" }}</span>
+            {% if is_paginated %}
+                <nav class="pagination-nav" aria-label="Paginación de pagos">
+                    {% if page_obj.has_previous %}<a href="?{% if selected_status %}estado={{ selected_status }}&amp;{% endif %}{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}{% if selected_method %}metodo={{ selected_method }}&amp;{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Página anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>{% endif %}
+                    <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}<a href="?{% if selected_status %}estado={{ selected_status }}&amp;{% endif %}{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}{% if selected_method %}metodo={{ selected_method }}&amp;{% endif %}page={{ page_obj.next_page_number }}" aria-label="Página siguiente"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>{% endif %}
+                </nav>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="client-empty-state">
+            <span class="empty-state-icon"><i class="bi bi-credit-card" aria-hidden="true"></i></span>
+            {% if search_query or selected_status or selected_method %}
+                <h3>No encontramos movimientos</h3>
+                <p>Prueba con otro concepto, clienta, estado o método de pago.</p>
+                <a class="btn btn-outline-light" href="{% url 'pagos:list' %}">Ver todos los pagos</a>
+            {% else %}
+                <h3>Aún no hay pagos registrados</h3>
+                <p>Registra un abono para comenzar el historial financiero de una mensualidad.</p>
+                <a class="btn btn-primary" href="{% url 'pagos:create' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Registrar primer pago</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

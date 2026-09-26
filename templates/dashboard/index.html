@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<section class="dashboard-intro">
+    <span class="section-eyebrow">Vista general</span>
+    <h2>Bienvenida{% if request.user.first_name %}, {{ request.user.first_name }}{% endif %}</h2>
+    <p>El espacio administrativo de Aldra Pilates está listo para recibir los datos del estudio.</p>
+</section>
+<section class="row g-4 mt-1" aria-label="Indicadores principales">
+    <div class="col-sm-6 col-xl-3"><article class="metric-card"><div class="metric-card-heading"><span>Clientes activas</span><i class="bi bi-people" aria-hidden="true"></i></div><strong class="metric-value" aria-label="Sin datos">—</strong><small>Sin datos todavía</small></article></div>
+    <div class="col-sm-6 col-xl-3"><article class="metric-card"><div class="metric-card-heading"><span>Ingresos del mes</span><i class="bi bi-cash-stack metric-positive" aria-hidden="true"></i></div><strong class="metric-value" aria-label="Sin datos">—</strong><small>Sin datos todavía</small></article></div>
+    <div class="col-sm-6 col-xl-3"><article class="metric-card"><div class="metric-card-heading"><span>Pagos pendientes</span><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></div><strong class="metric-value" aria-label="Sin datos">—</strong><small>Sin datos todavía</small></article></div>
+    <div class="col-sm-6 col-xl-3"><article class="metric-card"><div class="metric-card-heading"><span>Asistencias hoy</span><i class="bi bi-calendar2-check metric-secondary" aria-hidden="true"></i></div><strong class="metric-value" aria-label="Sin datos">—</strong><small>Sin datos todavía</small></article></div>
+</section>
+<section class="row g-4 mt-2">
+    <div class="col-xl-8"><article class="content-card empty-dashboard-card"><div class="card-heading-row"><div><span class="section-eyebrow">Actividad reciente</span><h3>Movimiento del estudio</h3></div></div><div class="empty-state"><span class="empty-state-icon"><i class="bi bi-bar-chart-line" aria-hidden="true"></i></span><h4>Aún no hay actividad registrada</h4><p>Los ingresos, pagos y asistencias aparecerán aquí cuando se implementen los módulos operativos.</p></div></article></div>
+    <div class="col-xl-4"><article class="content-card h-100"><span class="section-eyebrow">Estado del sistema</span><h3>Base preparada</h3><ul class="readiness-list"><li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Acceso administrativo protegido</span></li><li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>PostgreSQL conectado</span></li><li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Diseño adaptable a móvil</span></li></ul></article></div>
+</section>
+{% endblock %}

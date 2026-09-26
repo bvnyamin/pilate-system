@@ -1,0 +1,40 @@
+{% extends "base_auth.html" %}
+{% block title %}Iniciar sesión{% endblock %}
+{% block content %}
+<main class="auth-shell">
+    <section class="auth-brand-panel" aria-labelledby="brand-heading">
+        <div class="auth-brand-content">
+            <span class="auth-eyebrow">Wellness Studio</span>
+            <h1 id="brand-heading">ALDRA<br>PILATES</h1>
+            <p>Administración serena para un estudio en movimiento.</p>
+        </div>
+        <div class="auth-brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+    </section>
+    <section class="auth-form-panel">
+        <div class="auth-card">
+            <div class="auth-mobile-brand d-lg-none">
+                <span class="brand-name">ALDRA PILATES</span>
+                <span class="brand-subtitle">Wellness Studio</span>
+            </div>
+            <span class="auth-eyebrow">Acceso administrativo</span>
+            <h2>Bienvenida</h2>
+            <p class="auth-intro">Ingresa tus credenciales para continuar.</p>
+            {% if form.errors %}<div class="alert alert-danger" role="alert">El usuario o la contraseña no son correctos.</div>{% endif %}
+            {% if next and user.is_authenticated %}<div class="alert alert-warning" role="alert">Tu cuenta no tiene acceso a esta página.</div>{% endif %}
+            <form method="post" class="auth-form" novalidate>
+                {% csrf_token %}
+                <div class="form-floating">
+                    <input type="text" name="username" autocomplete="username" autofocus required id="{{ form.username.id_for_label }}" class="form-control" placeholder="Usuario" value="{{ form.username.value|default:'' }}">
+                    <label for="{{ form.username.id_for_label }}">Usuario</label>
+                </div>
+                <div class="form-floating">
+                    <input type="password" name="password" autocomplete="current-password" required id="{{ form.password.id_for_label }}" class="form-control" placeholder="Contraseña">
+                    <label for="{{ form.password.id_for_label }}">Contraseña</label>
+                </div>
+                <input type="hidden" name="next" value="{{ next }}">
+                <button class="btn btn-primary auth-submit" type="submit">Ingresar<i class="bi bi-arrow-right" aria-hidden="true"></i></button>
+            </form>
+        </div>
+    </section>
+</main>
+{% endblock %}

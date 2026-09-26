@@ -1,0 +1,30 @@
+:root {
+    --aldra-bg: #1a1110;
+    --aldra-bg-deep: #150c0b;
+    --aldra-surface-low: #231918;
+    --aldra-surface: #271d1c;
+    --aldra-surface-high: #322726;
+    --aldra-surface-highest: #3e3230;
+    --aldra-card: #211f1f;
+    --aldra-text: #f1dedb;
+    --aldra-text-muted: #bca7a3;
+    --aldra-primary: #ff8a7a;
+    --aldra-primary-soft: #ffb4a9;
+    --aldra-secondary: #e1c299;
+    --aldra-success: #58dcb6;
+    --aldra-danger: #ff766d;
+    --aldra-border: #56423f;
+    --aldra-border-soft: rgba(220, 192, 188, 0.13);
+    --aldra-sidebar-width: 260px;
+    --aldra-header-height: 82px;
+    --aldra-radius-sm: 8px;
+    --aldra-radius: 12px;
+    --aldra-radius-lg: 16px;
+    --aldra-shadow: 0 18px 50px rgba(0, 0, 0, 0.3);
+    --bs-primary: #ff8a7a;
+    --bs-primary-rgb: 255, 138, 122;
+    --bs-body-bg: #1a1110;
+    --bs-body-color: #f1dedb;
+    --bs-border-color: #56423f;
+    --bs-font-sans-serif: "Inter", sans-serif;
+}

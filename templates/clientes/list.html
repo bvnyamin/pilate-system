@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load clientes_formatters %}
+{% block title %}Clientes{% endblock %}
+{% block content %}
+<section class="page-intro-row">
+    <div>
+        <span class="section-eyebrow">Relaciones del estudio</span>
+        <h2>Clientes</h2>
+        <p>Administra los datos de las alumnas de Aldra Pilates.</p>
+    </div>
+    <a class="btn btn-primary page-primary-action" href="{% url 'clientes:create' %}">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> Nueva clienta
+    </a>
+</section>
+
+<section class="content-card client-list-card">
+    <div class="client-list-toolbar">
+        <div class="client-status-tabs" role="group" aria-label="Filtrar clientes por estado">
+            <a class="status-tab{% if not selected_status %} active{% endif %}" href="{% url 'clientes:list' %}{% if search_query %}?q={{ search_query|urlencode }}{% endif %}">Todas</a>
+            <a class="status-tab{% if selected_status == 'activa' %} active{% endif %}" href="?estado=activa{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}">Activas</a>
+            <a class="status-tab{% if selected_status == 'inactiva' %} active{% endif %}" href="?estado=inactiva{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}">Inactivas</a>
+        </div>
+        <form method="get" class="client-search" role="search">
+            {% if selected_status %}<input type="hidden" name="estado" value="{{ selected_status }}">{% endif %}
+            <label class="visually-hidden" for="client-search-input">Buscar clientes</label>
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input id="client-search-input" type="search" name="q" value="{{ search_query }}" placeholder="Buscar por nombre, RUT o contacto…">
+            {% if search_query %}<a href="{% url 'clientes:list' %}{% if selected_status %}?estado={{ selected_status }}{% endif %}" class="search-clear" aria-label="Limpiar búsqueda"><i class="bi bi-x-lg" aria-hidden="true"></i></a>{% endif %}
+        </form>
+    </div>
+
+    {% if clientes %}
+        <div class="table-responsive client-table-wrap">
+            <table class="table client-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Clienta</th>
+                        <th scope="col">RUT</th>
+                        <th scope="col">Contacto</th>
+                        <th scope="col">Incorporación</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col"><span class="visually-hidden">Acciones</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cliente in clientes %}
+                        <tr>
+                            <td data-label="Clienta">
+                                <a class="client-name-link" href="{% url 'clientes:detail' cliente.pk %}">{{ cliente.apellidos }}, {{ cliente.nombres }}</a>
+                                {% if cliente.email %}<span class="client-secondary">{{ cliente.email }}</span>{% endif %}
+                            </td>
+                            <td data-label="RUT" class="client-rut">{{ cliente.rut|format_rut }}</td>
+                            <td data-label="Contacto">{{ cliente.telefono|default:"—" }}</td>
+                            <td data-label="Incorporación">{{ cliente.fecha_incorporacion|date:"d/m/Y" }}</td>
+                            <td data-label="Estado"><span class="status-badge status-{{ cliente.estado }}">{{ cliente.get_estado_display }}</span></td>
+                            <td class="client-row-actions">
+                                <a class="icon-action" href="{% url 'clientes:detail' cliente.pk %}" aria-label="Ver ficha de {{ cliente }}" title="Ver ficha"><i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="client-list-footer">
+            <span>{{ total_clientes }} resultado{{ total_clientes|pluralize:"s" }}</span>
+            {% if is_paginated %}
+                <nav class="pagination-nav" aria-label="Paginación de clientes">
+                    {% if page_obj.has_previous %}<a href="?{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}{% if selected_status %}estado={{ selected_status }}&amp;{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Página anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>{% endif %}
+                    <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}<a href="?{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}{% if selected_status %}estado={{ selected_status }}&amp;{% endif %}page={{ page_obj.next_page_number }}" aria-label="Página siguiente"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>{% endif %}
+                </nav>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="client-empty-state">
+            <span class="empty-state-icon"><i class="bi bi-people" aria-hidden="true"></i></span>
+            {% if search_query or selected_status %}
+                <h3>No encontramos coincidencias</h3>
+                <p>Prueba con otro nombre, RUT o filtro de estado.</p>
+                <a class="btn btn-outline-light" href="{% url 'clientes:list' %}">Ver todas las clientas</a>
+            {% else %}
+                <h3>Aún no hay clientas registradas</h3>
+                <p>Agrega la primera ficha para comenzar a organizar la información del estudio.</p>
+                <a class="btn btn-primary" href="{% url 'clientes:create' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar primera clienta</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</section>
+{% endblock %}
