@@ -50,7 +50,14 @@
                         </div>
                         <span class="status-badge status-{{ mensualidad.estado }}">{{ mensualidad.get_estado_display }}</span>
                     </div>
-                    <div class="subscription-plan-line"><i class="bi bi-activity" aria-hidden="true"></i><span>{{ mensualidad.plan.nombre }} · {{ mensualidad.plan.clases_por_mes }} clases</span></div>
+                    <div class="subscription-plan-line">
+                        <span class="subscription-plan-name"><i class="bi bi-activity" aria-hidden="true"></i>{{ mensualidad.plan.nombre }} · {{ mensualidad.plan.clases_por_mes }} clases</span>
+                        <span class="subscription-remaining-count{% if not mensualidad.clases_restantes %} is-empty{% endif %}" aria-label="{{ mensualidad.clases_restantes }} clases restantes de {{ mensualidad.plan.clases_por_mes }}">
+                            <i class="bi bi-check2-circle" aria-hidden="true"></i>
+                            <strong>{{ mensualidad.clases_restantes }}</strong>
+                            <span>/ {{ mensualidad.plan.clases_por_mes }} restantes</span>
+                        </span>
+                    </div>
                     <dl class="subscription-facts">
                         <div><dt>Vigencia</dt><dd>{{ mensualidad.fecha_inicio|date:"d/m/Y" }} – {{ mensualidad.fecha_fin|date:"d/m/Y" }}</dd></div>
                         <div><dt>Precio acordado</dt><dd>{{ mensualidad.precio_final_clp|clp }}</dd></div>

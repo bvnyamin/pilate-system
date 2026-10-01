@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Asistencias{% endblock %}
+{% block content %}
+<section class="page-intro-row">
+    <div>
+        <span class="section-eyebrow">Registro del estudio</span>
+        <h2>Control de asistencia</h2>
+        <p>Organiza las sesiones y registra el estado de cada alumna.</p>
+    </div>
+    <div class="attendance-page-actions">
+        {% if request.user.is_staff %}<a class="btn btn-outline-light" href="{% url 'asistencias:schedule_settings' %}"><i class="bi bi-clock-history" aria-hidden="true"></i> Horarios</a>{% endif %}
+        <a class="btn btn-primary page-primary-action" href="{% url 'asistencias:create' %}{% if selected_date %}?fecha={{ selected_date }}{% endif %}">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i> Nueva sesión
+        </a>
+    </div>
+</section>
+
+<section class="content-card attendance-list-card">
+    <form method="get" class="attendance-filter-bar" role="search">
+        {% if show_all_dates %}<input type="hidden" name="todas" value="1">{% endif %}
+        <label class="attendance-filter-search">
+            <span class="visually-hidden">Buscar clienta o sesión</span>
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="search" name="q" value="{{ search_query }}" placeholder="Buscar clienta o sesión…">
+        </label>
+        <label><span>Fecha</span><input class="form-control" id="attendance-date" type="date" name="fecha" value="{% if selected_date %}{{ selected_date }}{% elif not show_all_dates %}{{ today }}{% endif %}"></label>
+        <label><span>Bloque</span><select class="form-select" name="bloque"><option value="">Todos</option>{% for value, label in block_choices %}<option value="{{ value }}"{% if selected_block == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+        <label><span>Estado</span><select class="form-select" name="estado"><option value="">Todos</option>{% for value, label in status_choices %}<option value="{{ value }}"{% if selected_status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+        <button class="btn btn-outline-light" type="submit"><i class="bi bi-sliders" aria-hidden="true"></i> Aplicar</button>
+        <a class="btn btn-quiet" href="{% url 'asistencias:list' %}?todas=1">Todas</a>
+    </form>
+
+    {% if sesiones %}
+        <div class="attendance-session-grid">
+            {% for sesion in sesiones %}
+                <article class="attendance-session-card">
+                    <div class="attendance-session-date">
+                        <span>{{ sesion.fecha|date:"d" }}</span>
+                        <small>{{ sesion.fecha|date:"M"|upper }}</small>
+                    </div>
+                    <div class="attendance-session-info">
+                        <span class="section-eyebrow">{{ sesion.hora|time:"H:i" }} hrs</span>
+                        <h3>{{ sesion.nombre }}</h3>
+                        <p><i class="bi bi-people" aria-hidden="true"></i> {{ sesion.asistencias.count }} registro{{ sesion.asistencias.count|pluralize:"s" }}</p>
+                    </div>
+                    <a class="btn btn-outline-light" href="{% url 'asistencias:roster' sesion.pk %}">Tomar asistencia <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                </article>
+            {% endfor %}
+        </div>
+        {% if is_paginated %}
+            <nav class="pagination-nav attendance-pagination" aria-label="Paginación de sesiones">
+                {% if page_obj.has_previous %}<a href="?{% if selected_date %}fecha={{ selected_date }}&amp;{% endif %}{% if show_all_dates %}todas=1&amp;{% endif %}{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}{% if selected_block %}bloque={{ selected_block }}&amp;{% endif %}{% if selected_status %}estado={{ selected_status }}&amp;{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Página anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>{% endif %}
+                <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}<a href="?{% if selected_date %}fecha={{ selected_date }}&amp;{% endif %}{% if show_all_dates %}todas=1&amp;{% endif %}{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}{% if selected_block %}bloque={{ selected_block }}&amp;{% endif %}{% if selected_status %}estado={{ selected_status }}&amp;{% endif %}page={{ page_obj.next_page_number }}" aria-label="Página siguiente"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>{% endif %}
+            </nav>
+        {% endif %}
+    {% else %}
+        <div class="client-empty-state">
+            <span class="empty-state-icon"><i class="bi bi-calendar2-check" aria-hidden="true"></i></span>
+            <h3>No hay sesiones para mostrar</h3>
+            <p>Prueba otra fecha o crea una sesión para empezar a registrar asistencias.</p>
+            <a class="btn btn-primary" href="{% url 'asistencias:create' %}{% if selected_date %}?fecha={{ selected_date }}{% endif %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Crear sesión</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

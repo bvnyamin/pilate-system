@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Revisar solicitud de alta{% endblock %}
+{% block content %}
+<a class="back-link" href="{% url 'clientes:medical_requests' %}">← Volver a solicitudes</a>
+<section class="page-intro-row"><div><span class="section-eyebrow">{{ solicitud.get_estado_display }}</span><h2>{{ solicitud.nombre_reportado }}</h2><p>{{ solicitud.email_reportado }} · {{ solicitud.telefono_reportado|default:"Sin teléfono" }} · Respuesta del {{ solicitud.respondida_en|date:"d/m/Y H:i" }}</p></div></section>
+{% for error in form.non_field_errors %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endfor %}
+<article class="content-card medical-preview-card">
+    <h3>Datos del perfil de clienta</h3>
+    <p>Al aprobar se crea o vincula el perfil de clienta y se adjunta su ficha médica. Esta acción no crea una cuenta de acceso.</p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-12"><label class="form-label" for="{{ form.cliente_existente.id_for_label }}">{{ form.cliente_existente.label }}</label>{{ form.cliente_existente }}<div class="form-help-text">{{ form.cliente_existente.help_text }}</div>{% for error in form.cliente_existente.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}</div>
+            {% for field in form %}{% if field.name != "cliente_existente" %}<div class="col-md-6"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}</div>{% endif %}{% endfor %}
+        </div>
+        <details class="medical-answer-details" open><summary>Revisar respuestas de ficha médica</summary><dl class="medical-answer-grid">{% for respuesta in solicitud.respuestas %}<div><dt>{{ respuesta.pregunta }}</dt><dd>{{ respuesta.respuesta|default:"No informado"|linebreaksbr }}</dd></div>{% endfor %}</dl></details>
+        {% if solicitud.estado == "pendiente" %}
+        <div class="mt-4"><label class="form-label" for="resolucion">Motivo del rechazo (obligatorio al rechazar)</label><textarea class="form-control" id="resolucion" name="resolucion" rows="2" maxlength="4000"></textarea></div>
+        <div class="form-actions"><button class="btn btn-outline-light" type="submit" name="accion" value="rechazar">Rechazar solicitud</button><button class="btn btn-primary" type="submit" name="accion" value="aprobar">Aprobar y crear perfil</button></div>
+        {% endif %}
+    </form>
+</article>
+{% endblock %}

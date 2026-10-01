@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static planes_formatters %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/reportes.css' %}?v=1">{% endblock %}
+{% block title %}Reportes{% endblock %}
+{% block content %}
+<section class="page-intro-row report-page-heading">
+    <div><span class="section-eyebrow">Visión del estudio</span><h2>Reportes</h2><p>Ingresos, gastos y actividad de tus clientas, en un mismo lugar.</p></div>
+    <form method="get" class="report-year-picker"><label for="report-year">Año</label><select class="form-select" id="report-year" name="anio" onchange="this.form.submit()">{% for item in anios %}<option value="{{ item }}"{% if item == anio %} selected{% endif %}>{{ item }}</option>{% endfor %}{% if anio not in anios %}<option selected value="{{ anio }}">{{ anio }}</option>{% endif %}</select></form>
+</section>
+<div class="report-kpi-grid">
+    <article class="content-card report-kpi"><span>Ingresos recibidos · {{ anio }}</span><strong>{{ total_ingresos|clp }}</strong><small>Pagos confirmados, incluyendo abonos y matrículas</small></article>
+    <article class="content-card report-kpi"><span>Gastos registrados · {{ anio }}</span><strong>{{ total_gastos|clp }}</strong><small><a href="{% url 'reportes:gastos' %}?anio={{ anio }}">Revisar movimientos de gastos</a></small></article>
+    <article class="content-card report-kpi report-kpi-balance"><span>Balance simple · {{ anio }}</span><strong>{{ balance_anual|clp }}</strong><small>Ingresos recibidos menos gastos registrados</small></article>
+</div>
+
+<section class="content-card report-chart-card">
+    <div class="card-heading-row"><div><span class="section-eyebrow">Comparación mensual</span><h3>Ingresos y gastos</h3></div><div class="report-chart-legend"><span><i class="legend-income"></i>Ingresos</span><span><i class="legend-expense"></i>Gastos</span></div></div>
+    {% if total_ingresos or total_gastos %}
+        <div class="report-bars" role="img" aria-label="Comparación de ingresos y gastos mensuales del año {{ anio }}">
+            {% for mes in meses %}<div class="report-bar-month" title="{{ mes.nombre }}: ingresos {{ mes.ingresos|clp }}, gastos {{ mes.gastos|clp }}"><div class="report-bar-pair"><span class="report-bar-income" style="--bar-height: {{ mes.ingresos_pct }}%"></span><span class="report-bar-expense" style="--bar-height: {{ mes.gastos_pct }}%"></span></div><span class="report-bar-label">{{ mes.nombre }}</span></div>{% endfor %}
+        </div>
+    {% else %}<div class="report-empty-inline"><i class="bi bi-bar-chart-line" aria-hidden="true"></i><span>Aún no hay ingresos ni gastos registrados para {{ anio }}.</span></div>{% endif %}
+</section>
+
+<div class="report-detail-grid">
+    <section class="content-card report-detail-card">
+        <div class="card-heading-row"><div><span class="section-eyebrow">Actividad</span><h3>Clientas con más asistencias</h3></div><span class="report-detail-caption">{{ anio }}</span></div>
+        {% if top_clientas %}<ol class="report-rank-list">{% for clienta in top_clientas %}<li><span class="report-rank-number">{{ forloop.counter|stringformat:"02d" }}</span><span class="report-rank-name">{{ clienta.nombres }} {{ clienta.apellidos }}</span><strong>{{ clienta.asistencias_contadas }}</strong></li>{% endfor %}</ol>{% else %}<p class="report-empty-inline">No hay asistencias realizadas registradas en {{ anio }}.</p>{% endif %}
+        <div class="report-micro-stat"><span>Asistencias realizadas del año</span><strong>{{ total_asistencias }}</strong></div>
+    </section>
+    <section class="content-card report-detail-card">
+        <div class="card-heading-row"><div><span class="section-eyebrow">Comunidad</span><h3>Trayectoria y gastos</h3></div></div>
+        <div class="report-community-stat"><span>Clientas activas</span><strong>{{ cantidad_clientas }}</strong></div>
+        {% if clienta_antigua %}<div class="report-oldest-client"><small>Registro más antiguo</small><strong>{{ clienta_antigua.nombres }} {{ clienta_antigua.apellidos }}</strong><span>Desde {{ clienta_antigua.fecha_incorporacion|date:"d/m/Y" }}</span></div>{% endif %}
+        {% if top_gastos %}<div class="report-category-list"><h4>Gastos por categoría</h4>{% for gasto in top_gastos %}<div><span>{{ gasto.etiqueta }}</span><strong>{{ gasto.total|clp }}</strong></div>{% endfor %}</div>{% endif %}
+    </section>
+</div>
+
+<section class="content-card report-month-table-card">
+    <div class="card-heading-row"><div><span class="section-eyebrow">Detalle anual</span><h3>Resumen por mes</h3></div><a class="btn btn-outline-light" href="{% url 'reportes:gastos' %}?anio={{ anio }}">Ver gastos <i class="bi bi-arrow-right" aria-hidden="true"></i></a></div>
+    <div class="table-responsive"><table class="table report-month-table align-middle mb-0"><thead><tr><th>Mes</th><th>Ingresos</th><th>Gastos</th><th>Balance simple</th></tr></thead><tbody>{% for mes in meses %}<tr><td data-label="Mes">{{ mes.nombre }} {{ anio }}</td><td data-label="Ingresos">{{ mes.ingresos|clp }}</td><td data-label="Gastos">{{ mes.gastos|clp }}</td><td data-label="Balance"><strong>{{ mes.balance|clp }}</strong></td></tr>{% endfor %}</tbody><tfoot><tr><th>Total {{ anio }}</th><th>{{ total_ingresos|clp }}</th><th>{{ total_gastos|clp }}</th><th>{{ balance_anual|clp }}</th></tr></tfoot></table></div>
+</section>
+{% endblock %}

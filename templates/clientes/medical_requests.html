@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Solicitudes de alta{% endblock %}
+{% block content %}
+<a class="back-link" href="{% url 'clientes:list' %}">← Volver a clientes</a>
+<section class="page-intro-row"><div><span class="section-eyebrow">Revisión administrativa</span><h2>Solicitudes de perfil</h2><p>{{ pendientes }} solicitud{{ pendientes|pluralize:"es" }} pendiente{{ pendientes|pluralize:"s" }} para crear un perfil de clienta y asociar su ficha médica.</p></div></section>
+<nav class="client-status-tabs mb-4" aria-label="Filtrar solicitudes">
+    <a class="status-tab{% if estado_seleccionado == 'pendiente' %} active{% endif %}" href="?estado=pendiente">Pendientes</a>
+    <a class="status-tab{% if estado_seleccionado == 'aprobada' %} active{% endif %}" href="?estado=aprobada">Aprobadas</a>
+    <a class="status-tab{% if estado_seleccionado == 'rechazada' %} active{% endif %}" href="?estado=rechazada">Rechazadas</a>
+</nav>
+<div class="medical-preview-list">
+{% for solicitud in solicitudes %}
+    <article class="content-card medical-preview-card">
+        <div class="medical-preview-heading"><div><span class="section-eyebrow">{{ solicitud.get_estado_display }}</span><h3>{{ solicitud.nombre_reportado }}</h3><p>{{ solicitud.email_reportado }} · {{ solicitud.telefono_reportado|default:"Sin teléfono" }}</p></div><span class="status-badge">{{ solicitud.creada_en|date:"d/m/Y H:i" }}</span></div>
+        {% if solicitud.cliente %}<p>Perfil vinculado: <a href="{% url 'clientes:detail' solicitud.cliente_id %}">{{ solicitud.cliente }} · {{ solicitud.cliente.rut }}</a></p>{% endif %}
+        {% if solicitud.resolucion %}<p>{{ solicitud.resolucion }}</p>{% endif %}
+        <a class="btn btn-outline-light" href="{% url 'clientes:medical_request_review' solicitud.pk %}">Revisar solicitud y ficha</a>
+    </article>
+{% empty %}<article class="content-card client-empty-state"><h3>No hay solicitudes para mostrar</h3><p>Cuando importes una respuesta nueva como solicitud, aparecerá aquí para revisión.</p></article>{% endfor %}
+</div>
+{% endblock %}

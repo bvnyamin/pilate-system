@@ -8,7 +8,7 @@
         <div>
             <span class="section-eyebrow">Movimiento financiero</span>
             <h2>{{ form_title }}</h2>
-            <p>Registra el importe de este movimiento y vincúlalo a una mensualidad.</p>
+            <p>Registra un pago mensual, una cuota o la matrícula única de una clienta.</p>
         </div>
     </section>
 
@@ -20,11 +20,11 @@
                 <section class="content-card client-form-card payment-form-card">
                     <div class="form-section-heading">
                         <span class="form-section-icon"><i class="bi bi-credit-card" aria-hidden="true"></i></span>
-                        <div><h3>Detalle del movimiento</h3><p>Todo pago debe quedar asociado a una mensualidad del historial.</p></div>
+                        <div><h3>Detalle del movimiento</h3><p id="payment-form-help">Elige el tipo de movimiento que vas a registrar.</p></div>
                     </div>
                     <div class="row g-4">
                         {% for field in form %}
-                            <div class="col-12{% if field.name == 'monto_clp' or field.name == 'metodo_pago' or field.name == 'fecha_pago' or field.name == 'estado_pago' %} col-md-6{% endif %}">
+                            <div class="col-12{% if field.name == 'monto_clp' or field.name == 'metodo_pago' or field.name == 'fecha_pago' or field.name == 'estado_pago' %} col-md-6{% endif %}"{% if field.name == 'cliente_plan' %} data-payment-group="mensualidad"{% elif field.name == 'cuota' %} data-payment-group="cuota"{% elif field.name == 'cliente' %} data-payment-group="matricula"{% endif %}>
                                 <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="required-marker"> *</span>{% endif %}</label>
                                 {{ field }}
                                 {% if field.help_text %}<div class="form-help-text">{{ field.help_text }}</div>{% endif %}
@@ -36,7 +36,7 @@
             </div>
             <div class="col-12 col-xl-4">
                 <aside class="content-card payment-context-card" aria-live="polite">
-                    <span class="section-eyebrow">Cuenta de la mensualidad</span>
+                    <span class="section-eyebrow" id="payment-context-eyebrow">Cuenta de la mensualidad</span>
                     <h3 id="payment-context-title">Selecciona una mensualidad</h3>
                     <p id="payment-context-plan" class="payment-context-plan">Elige una clienta y período para ver su estado.</p>
                     <dl>
@@ -44,7 +44,7 @@
                         <div><dt>Recibido antes</dt><dd id="payment-received-total">—</dd></div>
                     </dl>
                     <div class="payment-balance-line"><span>Saldo antes de este movimiento</span><strong id="payment-balance">—</strong></div>
-                    <p>Los pagos parciales se registran como movimientos separados. Los movimientos pendientes o anulados no reducen el saldo.</p>
+                    <p>Los pagos parciales se registran como movimientos separados. Si hay cuotas programadas, selecciona cuál estás pagando. Los movimientos pendientes o anulados no reducen el saldo.</p>
                 </aside>
             </div>
         </div>
@@ -55,4 +55,4 @@
     </form>
 </div>
 {% endblock %}
-{% block extra_js %}<script src="{% static 'js/pagos.js' %}"></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/pagos.js' %}?v=3"></script>{% endblock %}

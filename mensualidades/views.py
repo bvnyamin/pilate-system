@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -18,7 +18,13 @@ class ClientePlanListView(LoginRequiredMixin, ListView):
     paginate_by = 12
 
     def get_queryset(self):
-        queryset = ClientePlan.objects.select_related("cliente", "plan")
+        queryset = ClientePlan.objects.select_related("cliente", "plan").annotate(
+            present_count=Count(
+                "asistencias",
+                filter=Q(asistencias__estado__in=("presente", "ausente")),
+                distinct=True,
+            )
+        ).order_by("-periodo_anio", "-periodo_mes", "-fecha_inicio", "-pk")
         search = self.request.GET.get("q", "").strip()
         estado = self.request.GET.get("estado", "").strip()
         mes = self.request.GET.get("mes", "").strip()

@@ -2,90 +2,171 @@
 {% load planes_formatters %}
 {% block title %}Pagos{% endblock %}
 {% block content %}
-<section class="page-intro-row">
+<section class="page-intro-row payment-page-heading">
     <div>
         <span class="section-eyebrow">Movimientos financieros</span>
         <h2>Pagos</h2>
-        <p>Consulta los abonos asociados a cada mensualidad y conserva su historial.</p>
+        <p>Gestión de ingresos y control de pagos.</p>
     </div>
-    <a class="btn btn-primary page-primary-action" href="{% url 'pagos:create' %}">
-        <i class="bi bi-plus-lg" aria-hidden="true"></i> Registrar pago
-    </a>
+    <div class="payment-page-actions">
+        <a class="btn btn-outline-light" href="{% url 'pagos:cuotas' %}"><i class="bi bi-calendar2-week" aria-hidden="true"></i> Ver cuotas</a>
+        <a class="btn btn-primary page-primary-action" href="{% url 'pagos:create' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Registrar pago</a>
+    </div>
 </section>
 
-<section class="content-card payment-list-card">
-    <div class="payment-toolbar">
-        <div class="client-status-tabs" role="group" aria-label="Filtrar pagos por estado">
-            <a class="status-tab{% if not selected_status %} active{% endif %}" href="{% url 'pagos:list' %}{% if search_query or selected_method %}?{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}{% if selected_method %}metodo={{ selected_method }}{% endif %}{% endif %}">Todos</a>
-            {% for value, label in status_choices %}
-                <a class="status-tab{% if selected_status == value %} active{% endif %}" href="?estado={{ value }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}{% if selected_method %}&amp;metodo={{ selected_method }}{% endif %}">{{ label }}</a>
-            {% endfor %}
+<section class="payment-summary-grid" aria-label="Resumen de pagos">
+    <article class="payment-summary-card">
+        <div class="payment-summary-heading"><span>Ingresos del mes</span><i class="bi bi-wallet2" aria-hidden="true"></i></div>
+        <strong class="payment-summary-value">{{ ingresos_mes|clp }}</strong>
+        <small>Pagos recibidos durante el mes actual</small>
+    </article>
+    <article class="payment-summary-card">
+        <div class="payment-summary-heading"><span>Pagos pendientes</span><i class="bi bi-calendar2-week" aria-hidden="true"></i></div>
+        <strong class="payment-summary-value">{{ pagos_pendientes_count }}</strong>
+        <small>Total estimado: {{ pagos_pendientes_total|clp }}</small>
+    </article>
+    <article class="payment-summary-card">
+        <div class="payment-summary-heading"><span>Pagos realizados</span><i class="bi bi-check-circle" aria-hidden="true"></i></div>
+        <strong class="payment-summary-value">{{ pagos_realizados_count }}</strong>
+        <div class="payment-summary-progress" role="img" aria-label="{{ pagos_realizados_porcentaje }}% de los movimientos no anulados están pagados">
+            <span style="width: {{ pagos_realizados_porcentaje }}%"></span>
         </div>
-        <form method="get" class="payment-filters" role="search">
-            {% if selected_status %}<input type="hidden" name="estado" value="{{ selected_status }}">{% endif %}
-            <label class="payment-search">
-                <span class="visually-hidden">Buscar pagos por clienta, concepto o plan</span>
-                <i class="bi bi-search" aria-hidden="true"></i>
-                <input type="search" name="q" value="{{ search_query }}" placeholder="Buscar clienta, concepto o plan…">
-            </label>
-            <label><span class="visually-hidden">Método de pago</span>
-                <select name="metodo" class="form-select" aria-label="Filtrar por método de pago">
-                    <option value="">Todos los métodos</option>
-                    {% for value, label in method_choices %}<option value="{{ value }}"{% if selected_method == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
-                </select>
-            </label>
-            <button class="btn btn-outline-light" type="submit">Filtrar</button>
-        </form>
-    </div>
+        <small>{{ pagos_realizados_porcentaje }}% de {{ movimientos_activos_count }} movimientos no anulados</small>
+    </article>
+</section>
+
+<section class="content-card payment-list-card" aria-label="Historial de pagos">
+    <form method="get" class="payment-toolbar" role="search">
+        <label class="payment-search">
+            <span class="visually-hidden">Buscar por clienta, concepto o plan</span>
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="search" name="q" value="{{ search_query }}" placeholder="Buscar clienta o concepto…">
+        </label>
+        <nav class="payment-mobile-sort" aria-label="Orden rápido por fecha">
+            <span>Fecha:</span>
+            <a href="?{{ payment_mobile_sort_urls.recent }}"{% if payment_sort_key == 'fecha' and payment_sort_direction == 'desc' %} aria-current="true"{% endif %}>Más recientes</a>
+            <a href="?{{ payment_mobile_sort_urls.oldest }}"{% if payment_sort_key == 'fecha' and payment_sort_direction == 'asc' %} aria-current="true"{% endif %}>Más antiguos</a>
+        </nav>
+        <details class="payment-filter-details"{% if selected_status or selected_method or selected_type or selected_month or selected_date_from or selected_date_to %} open{% endif %}>
+            <summary class="btn btn-outline-light"><i class="bi bi-sliders" aria-hidden="true"></i> Filtros</summary>
+            <div class="payment-filter-panel">
+                <label>
+                    <span>Tipo de pago</span>
+                    <select name="tipo" class="form-select" aria-label="Filtrar por tipo de pago">
+                        <option value="">Todos los tipos</option>
+                        {% for value, label in type_choices %}<option value="{{ value }}"{% if selected_type == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+                    </select>
+                </label>
+                <div class="payment-month-picker" data-month-picker data-current-year="{{ current_year }}">
+                    <span class="payment-filter-label">Mes</span>
+                    <input type="hidden" name="mes" value="{{ selected_month }}" data-month-value>
+                    <div class="payment-month-picker-heading">
+                        <button type="button" data-year-step="-1" aria-label="Año anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></button>
+                        <strong data-month-year>{{ current_year }}</strong>
+                        <button type="button" data-year-step="1" aria-label="Año siguiente"><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+                    </div>
+                    <div class="payment-month-grid" role="group" aria-label="Seleccionar mes">
+                        <button type="button" data-month-number="1">Ene</button><button type="button" data-month-number="2">Feb</button><button type="button" data-month-number="3">Mar</button>
+                        <button type="button" data-month-number="4">Abr</button><button type="button" data-month-number="5">May</button><button type="button" data-month-number="6">Jun</button>
+                        <button type="button" data-month-number="7">Jul</button><button type="button" data-month-number="8">Ago</button><button type="button" data-month-number="9">Sep</button>
+                        <button type="button" data-month-number="10">Oct</button><button type="button" data-month-number="11">Nov</button><button type="button" data-month-number="12">Dic</button>
+                    </div>
+                    <div class="payment-month-picker-footer">
+                        <span data-month-caption aria-live="polite">Todos los meses</span>
+                        <button type="button" class="payment-month-clear" data-month-clear>Ver todos</button>
+                    </div>
+                </div>
+                <div class="payment-filter-date-range">
+                    <label><span>Desde</span><input type="date" name="desde" class="form-control" value="{{ selected_date_from }}" aria-label="Fecha desde"></label>
+                    <label><span>Hasta</span><input type="date" name="hasta" class="form-control" value="{{ selected_date_to }}" aria-label="Fecha hasta"></label>
+                </div>
+                <label>
+                    <span>Estado</span>
+                    <select name="estado" class="form-select" aria-label="Filtrar por estado">
+                        <option value="">Todos los estados</option>
+                        {% for value, label in status_choices %}<option value="{{ value }}"{% if selected_status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+                    </select>
+                </label>
+                <label>
+                    <span>Método</span>
+                    <select name="metodo" class="form-select" aria-label="Filtrar por método de pago">
+                        <option value="">Todos los métodos</option>
+                        {% for value, label in method_choices %}<option value="{{ value }}"{% if selected_method == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+                    </select>
+                </label>
+                <button class="btn btn-primary" type="submit">Aplicar filtros</button>
+                <a class="btn btn-quiet" href="{% url 'pagos:list' %}">Limpiar filtros</a>
+            </div>
+        </details>
+        <a class="btn btn-quiet payment-export-link" href="{% url 'pagos:export' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
+            <i class="bi bi-download" aria-hidden="true"></i> Exportar
+        </a>
+    </form>
+
+    {% if invalid_date_range %}<div class="alert alert-warning" role="alert">La fecha “Desde” debe ser anterior o igual a “Hasta”; no se aplicó ese rango.</div>{% endif %}
 
     {% if pagos %}
-        <div class="payment-grid">
-            {% for pago in pagos %}
-                <article class="payment-card">
-                    <div class="payment-card-heading">
-                        <div>
-                            <span class="section-eyebrow">{{ pago.fecha_pago|date:"d/m/Y" }}</span>
-                            <h3>{{ pago.cliente_plan.cliente.apellidos }}, {{ pago.cliente_plan.cliente.nombres }}</h3>
-                        </div>
-                        <span class="status-badge status-{{ pago.estado_pago }}">{{ pago.get_estado_pago_display }}</span>
-                    </div>
-                    <div class="payment-plan-line">
-                        <i class="bi bi-calendar2-month" aria-hidden="true"></i>
-                        <span>{{ pago.cliente_plan.plan.nombre }} · {{ pago.cliente_plan.periodo }}</span>
-                    </div>
-                    <p class="payment-concept">{{ pago.concepto }}</p>
-                    <dl class="payment-facts">
-                        <div><dt>Monto del movimiento</dt><dd class="payment-amount">{{ pago.monto_clp|clp }}</dd></div>
-                        <div><dt>Método</dt><dd>{{ pago.get_metodo_pago_display }}</dd></div>
-                    </dl>
-                    <div class="payment-card-actions">
-                        <a class="btn btn-outline-light" href="{% url 'pagos:update' pago.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</a>
-                        {% if pago.estado_pago != 'anulado' %}
-                            <form method="post" action="{% url 'pagos:set_status' pago.pk %}">
-                                {% csrf_token %}<input type="hidden" name="estado" value="anulado">
-                                <button class="btn btn-quiet" type="submit" aria-label="Anular pago de {{ pago.cliente_plan.cliente }} por {{ pago.monto_clp|clp }}">Anular movimiento</button>
-                            </form>
-                        {% endif %}
-                    </div>
-                </article>
-            {% endfor %}
+        <div class="table-responsive payment-table-wrap">
+            <table class="table payment-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col"{% if payment_sort_key == 'cliente' %} aria-sort="{% if payment_sort_direction == 'asc' %}ascending{% else %}descending{% endif %}"{% endif %}><a class="payment-sort-link" href="?{{ payment_sort_urls.cliente }}">Cliente{% if payment_sort_key == 'cliente' %}<span aria-hidden="true">{% if payment_sort_direction == 'asc' %}↑{% else %}↓{% endif %}</span>{% else %}<span aria-hidden="true">↕</span>{% endif %}</a></th>
+                        <th scope="col"{% if payment_sort_key == 'periodo' %} aria-sort="{% if payment_sort_direction == 'asc' %}ascending{% else %}descending{% endif %}"{% endif %}><a class="payment-sort-link" href="?{{ payment_sort_urls.periodo }}">Período{% if payment_sort_key == 'periodo' %}<span aria-hidden="true">{% if payment_sort_direction == 'asc' %}↑{% else %}↓{% endif %}</span>{% else %}<span aria-hidden="true">↕</span>{% endif %}</a></th>
+                        <th scope="col"{% if payment_sort_key == 'concepto' %} aria-sort="{% if payment_sort_direction == 'asc' %}ascending{% else %}descending{% endif %}"{% endif %}><a class="payment-sort-link" href="?{{ payment_sort_urls.concepto }}">Concepto{% if payment_sort_key == 'concepto' %}<span aria-hidden="true">{% if payment_sort_direction == 'asc' %}↑{% else %}↓{% endif %}</span>{% else %}<span aria-hidden="true">↕</span>{% endif %}</a></th>
+                        <th scope="col"{% if payment_sort_key == 'monto' %} aria-sort="{% if payment_sort_direction == 'asc' %}ascending{% else %}descending{% endif %}"{% endif %}><a class="payment-sort-link" href="?{{ payment_sort_urls.monto }}">Monto{% if payment_sort_key == 'monto' %}<span aria-hidden="true">{% if payment_sort_direction == 'asc' %}↑{% else %}↓{% endif %}</span>{% else %}<span aria-hidden="true">↕</span>{% endif %}</a></th>
+                        <th scope="col"{% if payment_sort_key == 'metodo' %} aria-sort="{% if payment_sort_direction == 'asc' %}ascending{% else %}descending{% endif %}"{% endif %}><a class="payment-sort-link" href="?{{ payment_sort_urls.metodo }}">Método{% if payment_sort_key == 'metodo' %}<span aria-hidden="true">{% if payment_sort_direction == 'asc' %}↑{% else %}↓{% endif %}</span>{% else %}<span aria-hidden="true">↕</span>{% endif %}</a></th>
+                        <th scope="col"{% if payment_sort_key == 'fecha' %} aria-sort="{% if payment_sort_direction == 'asc' %}ascending{% else %}descending{% endif %}"{% endif %}><a class="payment-sort-link" href="?{{ payment_sort_urls.fecha }}">Fecha{% if payment_sort_key == 'fecha' %}<span aria-hidden="true">{% if payment_sort_direction == 'asc' %}↑{% else %}↓{% endif %}</span>{% else %}<span aria-hidden="true">↕</span>{% endif %}</a></th>
+                        <th scope="col"{% if payment_sort_key == 'estado' %} aria-sort="{% if payment_sort_direction == 'asc' %}ascending{% else %}descending{% endif %}"{% endif %}><a class="payment-sort-link" href="?{{ payment_sort_urls.estado }}">Estado{% if payment_sort_key == 'estado' %}<span aria-hidden="true">{% if payment_sort_direction == 'asc' %}↑{% else %}↓{% endif %}</span>{% else %}<span aria-hidden="true">↕</span>{% endif %}</a></th>
+                        <th scope="col"><span class="visually-hidden">Acciones</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pago in pagos %}
+                        <tr>
+                            <td data-label="Cliente">
+                                <span class="payment-client-name">{{ pago.cliente_asociado.nombres }} {{ pago.cliente_asociado.apellidos }}</span>
+                            </td>
+                            <td data-label="Período">{{ pago.referencia_display }}</td>
+                            <td data-label="Concepto" class="payment-table-concept">{{ pago.concepto }}{% if pago.cuota_id %}<small class="payment-quota-label">Cuota {{ pago.cuota.numero }}</small>{% endif %}</td>
+                            <td data-label="Monto" class="payment-table-amount">{{ pago.monto_clp|clp }}</td>
+                            <td data-label="Método">{{ pago.get_metodo_pago_display }}</td>
+                            <td data-label="Fecha">{{ pago.fecha_pago|date:"d M, Y" }}</td>
+                            <td data-label="Estado"><span class="status-badge status-{{ pago.estado_pago }}">{{ pago.get_estado_pago_display }}</span></td>
+                            <td data-label="Acciones" class="payment-table-actions">
+                                <details class="payment-row-menu">
+                                    <summary aria-label="Acciones para el pago de {{ pago.cliente_asociado }}"><i class="bi bi-three-dots-vertical" aria-hidden="true"></i></summary>
+                                    <div class="payment-row-menu-panel">
+                                        <a href="{% url 'pagos:update' pago.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</a>
+                                        {% if pago.estado_pago != 'anulado' %}
+                                            <form method="post" action="{% url 'pagos:set_status' pago.pk %}">
+                                                {% csrf_token %}<input type="hidden" name="estado" value="anulado">
+                                                <button type="submit"><i class="bi bi-x-circle" aria-hidden="true"></i> Anular pago</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </details>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        <div class="client-list-footer">
-            <span>{{ total_pagos }} resultado{{ total_pagos|pluralize:"s" }}</span>
+        <div class="client-list-footer payment-list-footer">
+            <span>Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ paginator.count }} movimientos</span>
             {% if is_paginated %}
                 <nav class="pagination-nav" aria-label="Paginación de pagos">
-                    {% if page_obj.has_previous %}<a href="?{% if selected_status %}estado={{ selected_status }}&amp;{% endif %}{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}{% if selected_method %}metodo={{ selected_method }}&amp;{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Página anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>{% endif %}
-                    <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
-                    {% if page_obj.has_next %}<a href="?{% if selected_status %}estado={{ selected_status }}&amp;{% endif %}{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}{% if selected_method %}metodo={{ selected_method }}&amp;{% endif %}page={{ page_obj.next_page_number }}" aria-label="Página siguiente"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>{% endif %}
+                    {% if page_obj.has_previous %}<a href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Página anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>{% endif %}
+                    <span>Página {{ page_obj.number }} de {{ paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}<a href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page_obj.next_page_number }}" aria-label="Página siguiente"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>{% endif %}
                 </nav>
             {% endif %}
         </div>
     {% else %}
         <div class="client-empty-state">
             <span class="empty-state-icon"><i class="bi bi-credit-card" aria-hidden="true"></i></span>
-            {% if search_query or selected_status or selected_method %}
+            {% if search_query or selected_status or selected_method or selected_type or selected_month or selected_date_from or selected_date_to %}
                 <h3>No encontramos movimientos</h3>
-                <p>Prueba con otro concepto, clienta, estado o método de pago.</p>
+                <p>Prueba con otro período, tipo, concepto, clienta, estado o método de pago.</p>
                 <a class="btn btn-outline-light" href="{% url 'pagos:list' %}">Ver todos los pagos</a>
             {% else %}
                 <h3>Aún no hay pagos registrados</h3>

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load static %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/reportes.css' %}?v=2">{% endblock %}
+{% block title %}{{ form_title }}{% endblock %}
+{% block content %}
+<section class="page-intro-row report-page-heading"><div><span class="section-eyebrow">Control financiero</span><h2>{{ form_title }}</h2><p>Este movimiento se incluirá en el balance del mes y año de su fecha.</p></div></section>
+<form method="post" class="content-card report-expense-form" novalidate>{% csrf_token %}
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="report-expense-fields">
+        {% for field in form %}<div class="report-expense-field{% if field.name == 'observaciones' %} report-expense-notes{% endif %}"><label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span aria-hidden="true">*</span>{% endif %}</label>{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>{% endfor %}
+    </div>
+    <div class="form-actions"><a class="btn btn-outline-light" href="{% url 'reportes:gastos' %}">Cancelar</a><button class="btn btn-primary" type="submit"><i class="bi bi-check2" aria-hidden="true"></i> Guardar gasto</button></div>
+</form>
+{% endblock %}

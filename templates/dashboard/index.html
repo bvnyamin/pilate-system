@@ -1,19 +1,112 @@
 {% extends "base.html" %}
+{% load planes_formatters %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
 <section class="dashboard-intro">
     <span class="section-eyebrow">Vista general</span>
     <h2>Bienvenida{% if request.user.first_name %}, {{ request.user.first_name }}{% endif %}</h2>
-    <p>El espacio administrativo de Aldra Pilates está listo para recibir los datos del estudio.</p>
+    <p>Resumen del estudio para el {{ fecha_hoy|date:"j \d\e F \d\e Y" }}.</p>
 </section>
+
 <section class="row g-4 mt-1" aria-label="Indicadores principales">
-    <div class="col-sm-6 col-xl-3"><article class="metric-card"><div class="metric-card-heading"><span>Clientes activas</span><i class="bi bi-people" aria-hidden="true"></i></div><strong class="metric-value" aria-label="Sin datos">—</strong><small>Sin datos todavía</small></article></div>
-    <div class="col-sm-6 col-xl-3"><article class="metric-card"><div class="metric-card-heading"><span>Ingresos del mes</span><i class="bi bi-cash-stack metric-positive" aria-hidden="true"></i></div><strong class="metric-value" aria-label="Sin datos">—</strong><small>Sin datos todavía</small></article></div>
-    <div class="col-sm-6 col-xl-3"><article class="metric-card"><div class="metric-card-heading"><span>Pagos pendientes</span><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></div><strong class="metric-value" aria-label="Sin datos">—</strong><small>Sin datos todavía</small></article></div>
-    <div class="col-sm-6 col-xl-3"><article class="metric-card"><div class="metric-card-heading"><span>Asistencias hoy</span><i class="bi bi-calendar2-check metric-secondary" aria-hidden="true"></i></div><strong class="metric-value" aria-label="Sin datos">—</strong><small>Sin datos todavía</small></article></div>
+    <div class="col-sm-6 col-xl-3">
+        <article class="metric-card">
+            <div class="metric-card-heading"><span>Clientes activas</span><i class="bi bi-people" aria-hidden="true"></i></div>
+            <strong class="metric-value">{{ clientes_activas }}</strong>
+            <small>Registradas como activas</small>
+        </article>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <article class="metric-card">
+            <div class="metric-card-heading"><span>Ingresos del mes</span><i class="bi bi-cash-stack metric-positive" aria-hidden="true"></i></div>
+            <strong class="metric-value metric-value-money">{{ ingresos_mes|clp }}</strong>
+            <small>Pagos recibidos este mes</small>
+        </article>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <article class="metric-card">
+            <div class="metric-card-heading"><span>Pagos pendientes</span><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></div>
+            <strong class="metric-value">{{ pagos_pendientes_count }}</strong>
+            <small>{{ pagos_pendientes_total|clp }} en movimientos pendientes</small>
+        </article>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <article class="metric-card">
+            <div class="metric-card-heading"><span>Asistencias hoy</span><i class="bi bi-calendar2-check metric-secondary" aria-hidden="true"></i></div>
+            <strong class="metric-value">{{ asistencias_hoy }}</strong>
+            <small>Presentes · {{ registros_asistencia_hoy }} registro{{ registros_asistencia_hoy|pluralize:"s" }}</small>
+        </article>
+    </div>
 </section>
-<section class="row g-4 mt-2">
-    <div class="col-xl-8"><article class="content-card empty-dashboard-card"><div class="card-heading-row"><div><span class="section-eyebrow">Actividad reciente</span><h3>Movimiento del estudio</h3></div></div><div class="empty-state"><span class="empty-state-icon"><i class="bi bi-bar-chart-line" aria-hidden="true"></i></span><h4>Aún no hay actividad registrada</h4><p>Los ingresos, pagos y asistencias aparecerán aquí cuando se implementen los módulos operativos.</p></div></article></div>
-    <div class="col-xl-4"><article class="content-card h-100"><span class="section-eyebrow">Estado del sistema</span><h3>Base preparada</h3><ul class="readiness-list"><li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Acceso administrativo protegido</span></li><li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>PostgreSQL conectado</span></li><li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Diseño adaptable a móvil</span></li></ul></article></div>
+
+<section class="row g-4 mt-2" aria-label="Actividad del estudio">
+    <div class="col-xl-8">
+        <article class="content-card dashboard-chart-card">
+            <div class="card-heading-row">
+                <div><span class="section-eyebrow">Últimos seis meses</span><h3>Ingresos mensuales</h3></div>
+                <span class="dashboard-chart-unit">CLP</span>
+            </div>
+            {% if sin_ingresos_grafico %}
+                <div class="dashboard-chart-empty"><i class="bi bi-bar-chart-line" aria-hidden="true"></i><span>Aún no hay ingresos registrados para este período.</span></div>
+            {% else %}
+                <div class="dashboard-revenue-chart" role="img" aria-label="Ingresos mensuales de los últimos seis meses">
+                    <div class="dashboard-revenue-bars">
+                        {% for mes in ingresos_mensuales %}
+                            <div class="dashboard-revenue-column" title="{{ mes.label }}: {{ mes.total|clp }}">
+                                <span class="dashboard-revenue-value">{{ mes.total|clp }}</span>
+                                <div class="dashboard-revenue-track"><div class="dashboard-revenue-bar{% if forloop.last %} current{% endif %}" style="height: {{ mes.height }}%"></div></div>
+                                <span class="dashboard-revenue-label">{{ mes.label }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </article>
+    </div>
+    <div class="col-xl-4">
+        <article class="content-card dashboard-activity-card h-100">
+            <div class="card-heading-row"><div><span class="section-eyebrow">Agenda</span><h3>Actividad de hoy</h3></div><a class="dashboard-small-link" href="{% url 'asistencias:list' %}?fecha={{ fecha_hoy|date:'Y-m-d' }}">Asistencias</a></div>
+            {% if sesiones_hoy %}
+                <div class="dashboard-session-list">
+                    {% for sesion in sesiones_hoy %}
+                        <a class="dashboard-session-item" href="{% url 'asistencias:roster' sesion.pk %}">
+                            <span class="dashboard-session-icon"><i class="bi bi-clock" aria-hidden="true"></i></span>
+                            <span class="dashboard-session-copy"><strong>{{ sesion.hora|time:"H:i" }} hrs</strong><small>{{ sesion.nombre }}</small></span>
+                            <span class="dashboard-session-count"><strong>{{ sesion.presentes }}/{{ sesion.registradas }}</strong><small>presentes</small></span>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="dashboard-compact-empty"><i class="bi bi-calendar2" aria-hidden="true"></i><p>No hay sesiones registradas para hoy.</p><a href="{% url 'asistencias:create' %}">Crear sesión</a></div>
+            {% endif %}
+        </article>
+    </div>
+</section>
+
+<section class="content-card dashboard-pending-card mt-4">
+    <div class="card-heading-row">
+        <div><span class="section-eyebrow">Seguimiento financiero</span><h3>Pagos pendientes</h3></div>
+        <a class="btn btn-outline-light dashboard-all-link" href="{% url 'pagos:list' %}?estado=pendiente">Ver todos <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
+    </div>
+    {% if pagos_recientes_pendientes %}
+        <div class="table-responsive">
+            <table class="table dashboard-payment-table align-middle mb-0">
+                <thead><tr><th scope="col">Cliente</th><th scope="col">Plan y período</th><th scope="col">Fecha</th><th scope="col">Monto</th><th scope="col">Estado</th></tr></thead>
+                <tbody>
+                    {% for pago in pagos_recientes_pendientes %}
+                        <tr>
+                            <td data-label="Cliente">{{ pago.cliente_asociado.nombres }} {{ pago.cliente_asociado.apellidos }}</td>
+                            <td data-label="Plan y período">{{ pago.referencia_display }}</td>
+                            <td data-label="Fecha">{{ pago.fecha_pago|date:"d/m/Y" }}</td>
+                            <td data-label="Monto" class="dashboard-payment-amount">{{ pago.monto_clp|clp }}</td>
+                            <td data-label="Estado"><span class="status-badge status-pendiente">Pendiente</span></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="dashboard-pending-empty"><i class="bi bi-check2-circle" aria-hidden="true"></i><span>No hay movimientos de pago pendientes.</span></div>
+    {% endif %}
 </section>
 {% endblock %}

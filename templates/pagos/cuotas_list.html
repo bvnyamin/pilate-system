@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load planes_formatters %}
+{% block title %}Cuotas{% endblock %}
+{% block content %}
+<section class="page-intro-row payment-page-heading">
+    <div>
+        <span class="section-eyebrow">Seguimiento financiero</span>
+        <h2>Cuotas</h2>
+        <p>Revisa vencimientos, pagos recibidos y saldo pendiente por clienta.</p>
+    </div>
+    <a class="btn btn-primary page-primary-action" href="{% url 'pagos:cuotas_create' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Programar cuotas</a>
+</section>
+<div class="cuotas-toolbar">
+    <a class="back-link" href="{% url 'pagos:list' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a pagos</a>
+    <form method="get" role="search" class="client-search">
+        <label class="visually-hidden" for="cuotas-search">Buscar clienta o plan</label>
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <input id="cuotas-search" type="search" name="q" value="{{ search_query }}" placeholder="Buscar clienta o plan…">
+    </form>
+</div>
+{% if planes_cuotas %}
+    <div class="cuotas-list">
+        {% for mensualidad in planes_cuotas %}
+            <section class="content-card cuotas-plan-card">
+                <div class="cuotas-plan-heading">
+                    <div>
+                        <span class="section-eyebrow">{{ mensualidad.plan.nombre }} · {{ mensualidad.periodo }}</span>
+                        <h3>{{ mensualidad.cliente.nombres }} {{ mensualidad.cliente.apellidos }}</h3>
+                    </div>
+                    <span class="status-badge {% if mensualidad.cuotas_pendientes %}status-pendiente{% else %}status-pagado{% endif %}">
+                        {% if mensualidad.cuotas_pendientes %}{{ mensualidad.cuotas_pendientes }} de {{ mensualidad.cuotas_programadas|length }} pendientes{% else %}Todas pagadas{% endif %}
+                    </span>
+                </div>
+                <div class="cuotas-plan-summary">
+                    <span>Saldo de cuotas <strong>{{ mensualidad.saldo_cuotas_clp|clp }}</strong></span>
+                    <span>Saldo total de mensualidad <strong>{{ mensualidad.saldo_pendiente_clp|clp }}</strong></span>
+                </div>
+                <div class="cuotas-grid">
+                    {% for cuota in mensualidad.cuotas_programadas %}
+                        <article class="cuota-card{% if not cuota.saldo_pendiente_clp %} is-paid{% endif %}">
+                            <div class="cuota-card-top"><strong>Cuota {{ cuota.numero }} / {{ mensualidad.cuotas_programadas|length }}</strong><span>{{ cuota.fecha_vencimiento|date:"d/m/Y" }}</span></div>
+                            <div class="cuota-card-amount">{{ cuota.monto_clp|clp }}</div>
+                            <div class="cuota-card-balance">Recibido {{ cuota.total_pagado_clp|clp }} · Falta {{ cuota.saldo_pendiente_clp|clp }}</div>
+                            {% if cuota.saldo_pendiente_clp %}
+                                <a class="btn btn-outline-light" href="{% url 'pagos:create' %}?cuota={{ cuota.pk }}">Registrar pago <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                            {% else %}
+                                <span class="cuota-card-complete"><i class="bi bi-check-circle" aria-hidden="true"></i> Pagada</span>
+                            {% endif %}
+                        </article>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endfor %}
+    </div>
+    {% if is_paginated %}
+        <nav class="pagination-nav cuotas-pagination" aria-label="Paginación de cuotas">
+            {% if page_obj.has_previous %}<a href="?{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Página anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>{% endif %}
+            <span>Página {{ page_obj.number }} de {{ paginator.num_pages }}</span>
+            {% if page_obj.has_next %}<a href="?{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}" aria-label="Página siguiente"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>{% endif %}
+        </nav>
+    {% endif %}
+{% else %}
+    <section class="content-card client-empty-state">
+        <span class="empty-state-icon"><i class="bi bi-calendar2-week" aria-hidden="true"></i></span>
+        {% if search_query %}<h3>No encontramos cuotas</h3><p>Prueba con otra clienta o plan.</p><a class="btn btn-outline-light" href="{% url 'pagos:cuotas' %}">Ver todas</a>
+        {% else %}<h3>Aún no hay cuotas programadas</h3><p>Puedes dividir el saldo de una mensualidad y registrar sus pagos cuando se reciban.</p><a class="btn btn-primary" href="{% url 'pagos:cuotas_create' %}">Programar cuotas</a>{% endif %}
+    </section>
+{% endif %}
+{% endblock %}

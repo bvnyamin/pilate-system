@@ -44,8 +44,9 @@
                         {% for field in form %}
                             {% if field.name == 'periodo_mes' or field.name == 'periodo_anio' or field.name == 'fecha_inicio' or field.name == 'fecha_fin' or field.name == 'estado' %}
                                 <div class="col-12 col-md-6">
-                                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}<span class="required-marker"> *</span></label>
+                                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.name != 'fecha_fin' %}<span class="required-marker"> *</span>{% endif %}</label>
                                     {{ field }}
+                                    {% if field.name == 'fecha_fin' %}<div class="form-help-text" id="fecha-fin-help">Se calcula automáticamente: un mes desde el inicio, menos un día.</div>{% endif %}
                                     {% for error in field.errors %}<div class="invalid-feedback d-block" role="alert">{{ error }}</div>{% endfor %}
                                 </div>
                             {% endif %}
@@ -90,4 +91,4 @@
     </form>
 </div>
 {% endblock %}
-{% block extra_js %}<script src="{% load static %}{% static 'js/mensualidades.js' %}"></script>{% endblock %}
+{% block extra_js %}<script src="{% load static %}{% static 'js/mensualidades.js' %}?v=4"></script>{% endblock %}

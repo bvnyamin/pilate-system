@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Revisar fichas médicas{% endblock %}
+{% block content %}
+<a class="back-link" href="{% url 'clientes:medical_import' %}">← Volver a importaciones</a>
+<section class="page-intro-row"><div><span class="section-eyebrow">Revisión de coincidencias</span><h2>Fichas médicas</h2><p>{{ importacion.archivo }} · {{ filas|length }} respuestas por revisar.</p></div></section>
+{% for error in errores %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endfor %}
+{% if filas %}
+<form method="post">
+    {% csrf_token %}<input type="hidden" name="accion" value="confirmar">
+    <p class="form-help-text">Las coincidencias pueden asociarse a un perfil existente. Las respuestas sin coincidencia y con correo válido vienen marcadas para solicitar la creación de un perfil. Una administradora revisará los datos y deberá validar el RUT antes de aprobar; esto no crea una cuenta de acceso.</p>
+    <div class="medical-preview-list">
+    {% for fila in filas %}
+        <article class="content-card medical-preview-card">
+            <div class="medical-preview-heading"><div><span class="section-eyebrow">Respuesta {{ fila.numero }}</span><h3>{{ fila.nombre|default:"Nombre no informado" }}</h3><p>{{ fila.correo|default:"Sin correo" }} · {{ fila.telefono|default:"Sin teléfono" }}</p></div><span class="status-badge">{{ fila.criterio }}</span></div>
+            {% if not fila.duplicada %}
+            <div class="row g-3">
+                <div class="col-md-6"><label class="form-label" for="cliente_{{ fila.numero }}">Asociar a clienta</label>
+                    <select class="form-select" id="cliente_{{ fila.numero }}" name="cliente_{{ fila.numero }}">
+                        <option value="">Pendiente de revisión</option>
+                        {% for clienta in clientas %}<option value="{{ clienta.pk }}"{% if fila.seleccionada == clienta.pk|stringformat:"s" %} selected{% endif %}>{{ clienta }} · {{ clienta.rut }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6"><label class="form-label" for="motivo_{{ fila.numero }}">Motivo de asociación manual</label><input class="form-control" id="motivo_{{ fila.numero }}" name="motivo_{{ fila.numero }}" value="{{ fila.motivo }}" maxlength="2000" placeholder="Ej. contacto antiguo confirmado con la clienta"></div>
+                {% if fila.puede_solicitar %}<div class="col-12"><label class="form-check"><input class="form-check-input" type="checkbox" name="solicitud_{{ fila.numero }}" value="1"{% if fila.crear_solicitud %} checked{% endif %}><span class="form-check-label">Solicitar creación de perfil para esta respuesta</span></label></div>{% endif %}
+            </div>
+            {% endif %}
+            <details class="medical-answer-details"><summary>Ver respuestas de la ficha</summary><dl class="medical-answer-grid">{% for respuesta in fila.respuestas %}<div><dt>{{ respuesta.pregunta }}</dt><dd>{{ respuesta.respuesta|default:"No informado"|linebreaksbr }}</dd></div>{% endfor %}</dl></details>
+        </article>
+    {% endfor %}
+    </div>
+    <div class="form-actions"><a class="btn btn-outline-light" href="{% url 'clientes:medical_import' %}">Volver</a><button type="submit" class="btn btn-primary">Confirmar asociaciones seleccionadas</button></div>
+</form>
+{% else %}
+<article class="content-card client-history-card"><h3>Revisión completada</h3><p>Las fichas asociadas están disponibles en el perfil de cada clienta.</p><a class="btn btn-primary" href="{% url 'clientes:list' %}">Ver clientas</a></article>
+{% endif %}
+{% endblock %}

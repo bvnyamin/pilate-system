@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Importar fichas médicas{% endblock %}
+{% block content %}
+<div class="form-page-wrap">
+    <a class="back-link" href="{% url 'clientes:list' %}">← Volver a clientes</a>
+    <section class="page-intro-row"><div><span class="section-eyebrow">Ficha médica</span><h2>Importar respuestas</h2><p>Sube el CSV de Google Forms y revisa la asociación antes de guardar en los perfiles.</p></div></section>
+    <article class="content-card client-form-card medical-upload-card">
+        <h3>Archivo de Google Forms</h3>
+        <p>Se buscarán coincidencias por correo y teléfono de la clienta. Si la persona es nueva, puedes enviar una solicitud para que la administración revise y apruebe la creación de su perfil y ficha médica.</p>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <label for="{{ form.archivo.id_for_label }}" class="form-label">{{ form.archivo.label }}</label>
+            {{ form.archivo }}
+            {% for error in form.archivo.errors %}<div class="invalid-feedback d-block" role="alert">{{ error }}</div>{% endfor %}
+            <div class="form-help-text">CSV UTF-8 · máximo 2 MB y 2000 respuestas. El archivo original no se publica.</div>
+            <div class="form-actions"><button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i> Revisar coincidencias</button></div>
+        </form>
+    </article>
+    <p class="mt-3"><a href="{% url 'clientes:medical_requests' %}">Revisar solicitudes de alta pendientes</a></p>
+    {% if importaciones %}
+    <article class="content-card client-history-card medical-import-history">
+        <h3>Importaciones recientes</h3>
+        <div class="client-history-list">
+        {% for lote in importaciones %}
+            <div class="client-history-item"><div><h4>{{ lote.archivo }}</h4><p>{{ lote.created_at|date:"d/m/Y H:i" }} · {{ lote.filas_pendientes|length }} pendientes</p></div><a class="btn btn-outline-light" href="{% url 'clientes:medical_preview' lote.pk %}">Revisar</a></div>
+        {% endfor %}
+        </div>
+    </article>
+    {% endif %}
+</div>
+{% endblock %}

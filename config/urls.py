@@ -10,5 +10,7 @@ urlpatterns = [
     path("planes/", include("planes.urls")),
     path("mensualidades/", include("mensualidades.urls")),
     path("pagos/", include("pagos.urls")),
+    path("asistencias/", include("asistencias.urls")),
+    path("reportes/", include("reportes.urls")),
     path("", include("dashboard.urls")),
 ]

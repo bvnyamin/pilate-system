@@ -1,9 +1,10 @@
 * { box-sizing: border-box; }
-html, body { min-height: 100%; }
+html, body { min-height: 100%; -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: radial-gradient(circle at 75% -10%, rgba(255, 138, 122, 0.08), transparent 30%), var(--aldra-bg); color: var(--aldra-text); font-family: "Inter", sans-serif; font-size: 0.95rem; }
 a { color: inherit; }
 button, input, select, textarea { font: inherit; }
-.app-shell { display: flex; min-height: 100vh; }
+button, [role="button"], .btn { touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.app-shell { display: flex; min-height: 100vh; min-height: 100dvh; }
 .app-main { min-width: 0; flex: 1; margin-left: var(--aldra-sidebar-width); }
 .app-content { width: 100%; max-width: 1600px; margin-inline: auto; padding: 32px; }
 h1, h2, h3, h4, p { margin-top: 0; }

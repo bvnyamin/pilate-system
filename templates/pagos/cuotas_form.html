@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Programar cuotas{% endblock %}
+{% block content %}
+<div class="form-page-wrap">
+    <a class="back-link" href="{% url 'pagos:cuotas' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a cuotas</a>
+    <section class="page-intro-row form-page-heading">
+        <div>
+            <span class="section-eyebrow">Plan de pagos</span>
+            <h2>Programar cuotas</h2>
+            <p>Distribuye el saldo pendiente de una mensualidad. El saldo baja cuando registres cada pago.</p>
+        </div>
+    </section>
+    <form method="post" novalidate data-cuotas-form>
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="row g-4">
+            <div class="col-12 col-xl-8">
+                <section class="content-card client-form-card payment-form-card">
+                    <div class="form-section-heading">
+                        <span class="form-section-icon"><i class="bi bi-calendar2-week" aria-hidden="true"></i></span>
+                        <div><h3>Acuerdo de cuotas</h3><p>Los vencimientos se repiten cada mes desde la primera fecha.</p></div>
+                    </div>
+                    <div class="row g-4">
+                        {% for field in form %}
+                            <div class="col-12{% if field.name != 'cliente_plan' %} col-md-6{% endif %}">
+                                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}<span class="required-marker"> *</span></label>
+                                {{ field }}
+                                {% for error in field.errors %}<div class="invalid-feedback d-block" role="alert">{{ error }}</div>{% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+            <div class="col-12 col-xl-4">
+                <aside class="content-card payment-context-card" aria-live="polite">
+                    <span class="section-eyebrow">Vista previa</span>
+                    <h3 data-cuotas-preview-title>Selecciona una mensualidad</h3>
+                    <p class="payment-context-plan" data-cuotas-preview-periodo>El saldo se dividirá en cuotas de monto similar.</p>
+                    <dl>
+                        <div><dt>Saldo a programar</dt><dd data-cuotas-preview-saldo>—</dd></div>
+                        <div><dt>Cuotas</dt><dd data-cuotas-preview-cantidad>—</dd></div>
+                    </dl>
+                    <div class="payment-balance-line"><span>Monto por cuota</span><strong data-cuotas-preview-monto>—</strong></div>
+                    <p>Si hay pesos sobrantes, se agregan a la última cuota. Podrás registrar abonos parciales para cada una.</p>
+                </aside>
+            </div>
+        </div>
+        <div class="form-actions">
+            <a class="btn btn-outline-light" href="{% url 'pagos:cuotas' %}">Cancelar</a>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-check2" aria-hidden="true"></i> Programar cuotas</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/cuotas.js' %}?v=1"></script>{% endblock %}

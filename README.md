@@ -40,6 +40,46 @@ docker compose down
 
 El servicio PostgreSQL solo está disponible dentro de la red de Docker; no publica su puerto en el host.
 
+## Pagos en cuotas
+
+En **Pagos → Ver cuotas → Programar cuotas**, seleccionar una mensualidad, entre 2 y 12 cuotas y la fecha del primer vencimiento. El sistema divide el saldo pendiente en pesos enteros, agrega el posible resto a la última cuota y programa vencimientos mensuales.
+
+Programar las cuotas no registra ingresos ni reduce el saldo. Cada tarjeta muestra lo recibido, lo pendiente y permite registrar uno o varios abonos para esa cuota. Al completar o anular un abono, los saldos y el número de cuotas pendientes se recalculan. Si la mensualidad tiene un movimiento pendiente anterior, hay que resolverlo o anularlo antes de programar cuotas para evitar duplicar el cobro.
+
+## Bloques horarios de asistencia
+
+El personal staff puede abrir **Asistencias → Horarios** para cambiar el inicio y término de los bloques matutino y vespertino. Los horarios ofrecidos se generan cada 30 minutos y el término del bloque no se ofrece como hora de inicio. Los bloques deben mantenerse en orden y no superponerse; las sesiones previas no se alteran.
+
 ## Producción
 
 El comando predeterminado de la imagen ejecuta Gunicorn. `docker-compose.yml` lo reemplaza por el servidor de desarrollo de Django únicamente para trabajo local.
+
+## Importación de fichas médicas
+
+En **Clientes → Importar fichas médicas**, subir el CSV UTF-8 exportado de Google Forms o Sheets (máximo 2 MB y 2000 respuestas). La importación se revisa antes de asociar las fichas a los perfiles.
+
+- Se compara el correo sin distinguir mayúsculas y el teléfono chileno normalizado. El teléfono de emergencia no participa en la búsqueda.
+- Los contactos compartidos, contradictorios o sin coincidencia quedan pendientes. Una asociación manual requiere un motivo.
+- Confirmar las asociaciones seleccionadas guarda las fichas. Las pendientes se pueden retomar desde Importaciones recientes.
+- Una respuesta idéntica no se importa dos veces. Las respuestas nuevas conservan el historial y la fecha de respuesta determina la ficha vigente.
+- Las fichas se consultan en la pestaña **Ficha médica** del perfil. Los usuarios staff tienen acceso; otros usuarios necesitan `clientes.view_fichamedica` para consultar y `clientes.add_fichamedica` para importar. Cada borrador de importación solo es accesible a quien lo subió.
+
+El CSV original no se almacena como archivo público. Las respuestas y las asociaciones quedan en la base de datos. Este flujo no cambia los contactos, el RUT, los pagos o las asistencias de las clientas.
+
+Después de actualizar un entorno ya iniciado, aplicar la migración de clientes:
+
+```bash
+docker compose exec web python manage.py migrate
+```
+
+## Reportes y gastos del estudio
+
+En **Reportes** se compara por mes lo recaudado con los gastos registrados, con filtro anual, balance simple, asistencias realizadas por clienta y fecha de incorporación más antigua. Los ingresos consideran movimientos pagados y abonos parciales; movimientos pendientes o anulados no cuentan como recaudación. Las asistencias para el ranking consideran Presente y Recuperó.
+
+En **Reportes → Gastos del estudio** se pueden registrar y corregir arriendo, electricidad, agua, gas, internet, aseo e insumos, mantención y otros gastos, con fecha, monto y observaciones. Los gastos no se repiten automáticamente: cada período se registra para conservar trazabilidad. El balance mostrado es informativo (ingresos registrados menos gastos ingresados), no reemplaza contabilidad ni impuestos.
+
+La nueva tabla de gastos se crea con las migraciones estándar:
+
+```bash
+docker compose exec web python manage.py migrate
+```

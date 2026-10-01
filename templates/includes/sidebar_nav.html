@@ -5,9 +5,9 @@
             <span class="brand-subtitle">Wellness Studio</span>
         </a>
     {% endif %}
-    <button class="btn btn-primary sidebar-action" type="button" disabled title="Disponible en una próxima etapa">
+    <a class="btn btn-primary sidebar-action" href="{% url 'asistencias:create' %}">
         <i class="bi bi-plus-lg" aria-hidden="true"></i> Nueva sesión
-    </button>
+    </a>
     <nav class="sidebar-nav" aria-label="Módulos administrativos">
         <a class="sidebar-link{% if request.resolver_match.namespace == 'dashboard' %} active{% endif %}" href="{% url 'dashboard:index' %}"{% if request.resolver_match.namespace == 'dashboard' %} aria-current="page"{% endif %}>
             <i class="bi bi-grid-1x2" aria-hidden="true"></i><span>Dashboard</span>
@@ -24,8 +24,15 @@
         <a class="sidebar-link{% if request.resolver_match.namespace == 'pagos' %} active{% endif %}" href="{% url 'pagos:list' %}"{% if request.resolver_match.namespace == 'pagos' %} aria-current="page"{% endif %}>
             <i class="bi bi-credit-card" aria-hidden="true"></i><span>Pagos</span>
         </a>
-        <span class="sidebar-link is-disabled" aria-disabled="true"><i class="bi bi-calendar2-check" aria-hidden="true"></i><span>Asistencias</span></span>
-        <span class="sidebar-link is-disabled" aria-disabled="true"><i class="bi bi-bar-chart" aria-hidden="true"></i><span>Reportes</span></span>
+        <a class="sidebar-link{% if request.resolver_match.namespace == 'asistencias' %} active{% endif %}" href="{% url 'asistencias:list' %}"{% if request.resolver_match.namespace == 'asistencias' %} aria-current="page"{% endif %}>
+            <i class="bi bi-calendar2-check" aria-hidden="true"></i><span>Asistencias</span>
+        </a>
+        <a class="sidebar-link{% if request.resolver_match.namespace == 'reportes' and request.resolver_match.url_name == 'index' %} active{% endif %}" href="{% url 'reportes:index' %}"{% if request.resolver_match.namespace == 'reportes' and request.resolver_match.url_name == 'index' %} aria-current="page"{% endif %}>
+            <i class="bi bi-bar-chart" aria-hidden="true"></i><span>Reportes</span>
+        </a>
+        <a class="sidebar-link{% if request.resolver_match.namespace == 'reportes' and request.resolver_match.url_name != 'index' %} active{% endif %}" href="{% url 'reportes:gastos' %}"{% if request.resolver_match.namespace == 'reportes' and request.resolver_match.url_name != 'index' %} aria-current="page"{% endif %}>
+            <i class="bi bi-wallet2" aria-hidden="true"></i><span>Gastos</span>
+        </a>
     </nav>
     <div class="sidebar-footer">
         <span class="sidebar-link is-disabled" aria-disabled="true"><i class="bi bi-gear" aria-hidden="true"></i><span>Configuración</span></span>

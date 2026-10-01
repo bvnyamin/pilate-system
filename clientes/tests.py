@@ -5,6 +5,11 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from asistencias.models import Asistencia, Sesion
+from mensualidades.models import ClientePlan
+from pagos.models import Pago
+from planes.models import Plan
+
 from .admin import ClienteAdmin
 from .models import Cliente
 from .validators import normalize_rut
@@ -146,6 +151,13 @@ class ClienteViewsTests(TestCase):
         self.assertRedirects(response, reverse("clientes:detail", kwargs={"pk": cliente.pk}))
         self.assertEqual(cliente.rut, "12345678-5")
 
+    def test_client_form_marks_rut_and_phone_for_shared_formatting(self):
+        response = self.client.get(reverse("clientes:create"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-input-format="rut"')
+        self.assertContains(response, 'data-input-format="telefono"')
+
     def test_create_rejects_invalid_rut(self):
         response = self.client.post(
             reverse("clientes:create"),
@@ -168,14 +180,68 @@ class ClienteViewsTests(TestCase):
         self.assertEqual(cliente.telefono, "+56 9 1234 5678")
         self.assertEqual(cliente.email, "maria@example.test")
 
-    def test_detail_shows_profile_and_future_sections_as_unavailable(self):
+    def test_detail_shows_working_profile_tabs_and_empty_states(self):
         cliente = self.crear_cliente()
 
         response = self.client.get(reverse("clientes:detail", kwargs={"pk": cliente.pk}))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Información personal")
-        self.assertContains(response, "Disponible al implementar mensualidades")
+        self.assertContains(response, 'data-bs-target="#planes"')
+        self.assertContains(response, 'data-bs-target="#pagos"')
+        self.assertContains(response, 'data-bs-target="#asistencias"')
+        self.assertContains(response, "Sin planes registrados")
+        self.assertContains(response, "Sin pagos registrados")
+        self.assertContains(response, "Sin asistencias registradas")
+        self.assertNotContains(response, "Disponible al implementar")
+
+    def test_detail_histories_show_only_records_for_the_selected_client(self):
+        cliente = self.crear_cliente()
+        otra = self.crear_cliente(
+            nombres="Carolina",
+            apellidos="Pérez",
+            rut="9.876.543-3",
+        )
+        plan = Plan.objects.create(nombre="Plan de prueba", clases_por_mes=4, precio_lista_clp=20000)
+        hoy = timezone.localdate()
+        contratacion = ClientePlan.objects.create(
+            cliente=cliente,
+            plan=plan,
+            periodo_mes=hoy.month,
+            periodo_anio=hoy.year,
+            fecha_inicio=hoy,
+            fecha_fin=hoy,
+        )
+        otra_contratacion = ClientePlan.objects.create(
+            cliente=otra,
+            plan=plan,
+            periodo_mes=hoy.month,
+            periodo_anio=hoy.year,
+            fecha_inicio=hoy,
+            fecha_fin=hoy,
+        )
+        pago = Pago.objects.create(
+            cliente_plan=contratacion,
+            concepto="Mensualidad de prueba",
+            monto_clp=10000,
+            metodo_pago=Pago.MetodoPago.EFECTIVO,
+        )
+        Pago.objects.create(
+            cliente_plan=otra_contratacion,
+            concepto="Pago de otra clienta",
+            monto_clp=10000,
+            metodo_pago=Pago.MetodoPago.EFECTIVO,
+        )
+        sesion = Sesion.objects.create(fecha=hoy, hora="10:00", nombre="Clase de prueba")
+        asistencia = Asistencia.objects.create(sesion=sesion, cliente_plan=contratacion)
+
+        response = self.client.get(reverse("clientes:detail", kwargs={"pk": cliente.pk}))
+
+        self.assertEqual(list(response.context["planes_cliente"]), [contratacion])
+        self.assertEqual(list(response.context["pagos_cliente"]), [pago])
+        self.assertEqual(list(response.context["asistencias_cliente"]), [asistencia])
+        self.assertContains(response, "Mensualidad de prueba")
+        self.assertNotContains(response, "Pago de otra clienta")
 
     def test_status_change_is_post_only_and_preserves_record(self):
         cliente = self.crear_cliente()

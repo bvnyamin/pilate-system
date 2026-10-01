@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Asistencia · {{ sesion.fecha|date:"d/m/Y" }}{% endblock %}
+{% block content %}
+<div class="attendance-page-wrap">
+    <a class="back-link" href="{% url 'asistencias:list' %}?fecha={{ sesion.fecha|date:'Y-m-d' }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a sesiones</a>
+    <section class="page-intro-row attendance-heading">
+        <div>
+            <h2>{{ heading }}</h2>
+            <p>{{ sesion.fecha|date:"l, j" }} de {{ sesion.fecha|date:"F" }}</p>
+        </div>
+        <details class="attendance-time-picker" data-session-picker>
+            <summary aria-label="Cambiar horario de la sesión">
+                <i class="bi bi-clock" aria-hidden="true"></i>
+                <span>{{ sesion.hora|time:"H:i" }} hrs</span>
+                <i class="bi bi-chevron-down" aria-hidden="true"></i>
+            </summary>
+            <nav class="attendance-session-options" aria-label="Sesiones de este día">
+                <span class="attendance-session-options-label">Horarios del día</span>
+                {% for item in sesiones_del_dia %}
+                    <a href="{% url 'asistencias:roster' item.pk %}"{% if item.pk == sesion.pk %} aria-current="page"{% endif %}>
+                        <i class="bi bi-clock" aria-hidden="true"></i>
+                        <span>{{ item.hora|time:"H:i" }} hrs</span>
+                        {% if item.pk == sesion.pk %}<i class="bi bi-check2" aria-hidden="true"></i>{% endif %}
+                    </a>
+                {% endfor %}
+            </nav>
+        </details>
+    </section>
+
+    {% if formset.non_form_errors %}<div class="alert alert-danger" role="alert">{{ formset.non_form_errors }}</div>{% endif %}
+
+    {% if rows %}
+        <form method="post" class="attendance-roster-form" novalidate>
+            {% csrf_token %}{{ formset.management_form }}
+            <div class="attendance-roster-list">
+                {% for row in rows %}
+                    <article class="attendance-roster-card" data-attendance-card>
+                        <div class="attendance-roster-person">
+                            <span class="attendance-avatar" aria-hidden="true">{{ row.subscription.cliente.nombres|slice:":1" }}{{ row.subscription.cliente.apellidos|slice:":1" }}</span>
+                            <div>
+                                <h3>{{ row.subscription.cliente.nombres }} {{ row.subscription.cliente.apellidos }}</h3>
+                                <div class="attendance-plan-meta"><span class="attendance-plan-badge">{{ row.subscription.plan.nombre }}</span><span>{{ row.subscription.clases_restantes }} clase{{ row.subscription.clases_restantes|pluralize:"s" }} restante{{ row.subscription.clases_restantes|pluralize:"s" }}</span></div>
+                            </div>
+                        </div>
+                        <div class="attendance-row-fields">
+                            {{ row.form.cliente_plan }}
+                            <div class="attendance-state-field">
+                                <span class="visually-hidden">Estado de {{ row.subscription.cliente }}</span>
+                                <div class="attendance-status-buttons" role="group" aria-label="Estado de {{ row.subscription.cliente }}">
+                                    {% for value, label in row.form.estado.field.choices %}{% if value != 'justificado' %}
+                                        <label class="attendance-status-option status-{{ value }}">
+                                            <input type="radio" name="{{ row.form.estado.html_name }}" value="{{ value }}" data-attendance-state{% if row.form.estado.value == value %} checked{% endif %}>
+                                            <span>{{ label }}</span>
+                                        </label>
+                                    {% endif %}{% endfor %}
+                                    {% if row.form.estado.value == 'justificado' %}<input type="radio" class="visually-hidden" name="{{ row.form.estado.html_name }}" value="justificado" checked aria-hidden="true" tabindex="-1">{% endif %}
+                                </div>
+                                {% for error in row.form.estado.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                            </div>
+                            <div class="attendance-cancel-fields" data-cancel-fields{% if row.form.estado.value != 'cancelo' %} hidden{% endif %}>
+                                <label>¿Por qué canceló? {{ row.form.motivo_cancelacion }}</label>
+                                {% for error in row.form.motivo_cancelacion.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                                <div class="attendance-cancel-date-field">
+                                    <label for="{{ row.form.fecha_aviso_cancelacion.id_for_label }}">¿Cuándo avisó?</label>
+                                    {{ row.form.fecha_aviso_cancelacion }}
+                                    {% for error in row.form.fecha_aviso_cancelacion.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                                </div>
+                                <small>Para generar recuperación, el aviso debe ser al menos 4 horas antes de la clase.</small>
+                                {% if row.recovery_state %}<span class="attendance-recovery-status"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Recuperación: {{ row.recovery_state }}</span>{% endif %}
+                            </div>
+                        </div>
+                        <details class="attendance-note-toggle"{% if row.form.observaciones.value %} open{% endif %}>
+                            <summary><i class="bi bi-chat-left-text" aria-hidden="true"></i> Observación</summary>
+                            <label class="visually-hidden" for="{{ row.form.observaciones.id_for_label }}">Observación para {{ row.subscription.cliente }}</label>
+                            {{ row.form.observaciones }}
+                            {% for error in row.form.observaciones.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                        </details>
+                    </article>
+                {% endfor %}
+            </div>
+            <div class="attendance-save-row">
+                <p><i class="bi bi-info-circle" aria-hidden="true"></i> Presente y Ausente descuentan una clase. Canceló solo genera recuperación si se avisó con 4 horas de anticipación.</p>
+                <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle" aria-hidden="true"></i> Guardar asistencia</button>
+            </div>
+        </form>
+    {% else %}
+        <div class="content-card client-empty-state attendance-empty-state">
+            <span class="empty-state-icon"><i class="bi bi-person-plus" aria-hidden="true"></i></span>
+            <h3>No hay mensualidades vigentes para esta fecha</h3>
+            <p>Para tomar asistencia, debe existir una mensualidad vigente durante el día de la sesión.</p>
+            <a class="btn btn-outline-light" href="{% url 'mensualidades:list' %}">Revisar mensualidades</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/asistencias.js' %}?v=10"></script>{% endblock %}

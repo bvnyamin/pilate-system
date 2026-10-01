@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Asistencia, Sesion
+from .models import Asistencia, HorarioEstudio, Sesion
 
 
 class AsistenciaInline(admin.TabularInline):
@@ -28,3 +28,17 @@ class AsistenciaAdmin(admin.ModelAdmin):
     list_filter = ["estado", "sesion__fecha"]
     search_fields = ["cliente_plan__cliente__nombres", "cliente_plan__cliente__apellidos", "cliente_plan__cliente__rut"]
     autocomplete_fields = ["sesion", "cliente_plan"]
+
+
+@admin.register(HorarioEstudio)
+class HorarioEstudioAdmin(admin.ModelAdmin):
+    fieldsets = (
+        ("Bloque matutino", {"fields": ("matutino_inicio", "matutino_fin")}),
+        ("Bloque vespertino", {"fields": ("vespertino_inicio", "vespertino_fin")}),
+    )
+
+    def has_add_permission(self, request):
+        return not HorarioEstudio.objects.exists() and super().has_add_permission(request)
+
+    def has_delete_permission(self, request, obj=None):
+        return False

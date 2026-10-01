@@ -1,3 +1,5 @@
+import calendar
+from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.core.exceptions import ValidationError
@@ -7,6 +9,20 @@ from django.db.models import F, Q, Sum
 
 from clientes.models import Cliente
 from planes.models import Plan
+
+
+def calcular_fecha_fin_mensual(fecha_inicio):
+    """Devuelve el día anterior al aniversario mensual de la fecha de inicio."""
+    if not fecha_inicio:
+        return None
+
+    siguiente_mes = fecha_inicio.replace(day=28) + timedelta(days=4)
+    dia_aniversario = min(
+        fecha_inicio.day,
+        calendar.monthrange(siguiente_mes.year, siguiente_mes.month)[1],
+    )
+    aniversario = siguiente_mes.replace(day=dia_aniversario)
+    return aniversario - timedelta(days=1)
 
 
 class ClientePlan(models.Model):
@@ -96,6 +112,16 @@ class ClientePlan(models.Model):
     def clean(self):
         super().clean()
         errors = {}
+        fecha_inicio_cambio = self._state.adding
+        if self.pk and not fecha_inicio_cambio:
+            fecha_inicio_anterior = type(self).objects.filter(pk=self.pk).values_list(
+                "fecha_inicio", flat=True
+            ).first()
+            fecha_inicio_cambio = fecha_inicio_anterior != self.fecha_inicio
+
+        if self.fecha_inicio and fecha_inicio_cambio:
+            self.fecha_fin = calcular_fecha_fin_mensual(self.fecha_inicio)
+
         if self.fecha_inicio and self.fecha_fin and self.fecha_fin < self.fecha_inicio:
             errors["fecha_fin"] = "La fecha de término no puede ser anterior al inicio."
 
@@ -113,6 +139,15 @@ class ClientePlan(models.Model):
                     rounding=ROUND_HALF_UP,
                 )
             )
+
+        if self.pk and self.cuotas.exists():
+            precio_anterior = type(self).objects.filter(pk=self.pk).values_list(
+                "precio_final_clp", flat=True
+            ).first()
+            if precio_anterior != self.precio_final_clp:
+                errors["descuento_porcentaje"] = (
+                    "Esta mensualidad tiene cuotas programadas. Conserva el precio acordado."
+                )
 
         if errors:
             raise ValidationError(errors)
@@ -135,6 +170,17 @@ class ClientePlan(models.Model):
     @property
     def saldo_pendiente_clp(self):
         return max(self.precio_final_clp - self.total_pagado_clp, 0)
+
+    @property
+    def clases_utilizadas(self):
+        anotadas = getattr(self, "present_count", None)
+        if anotadas is not None:
+            return anotadas
+        return self.asistencias.filter(estado__in=["presente", "ausente"]).count()
+
+    @property
+    def clases_restantes(self):
+        return max(self.plan.clases_por_mes - self.clases_utilizadas, 0)
 
     def __str__(self):
         return f"{self.cliente} · {self.plan} · {self.periodo}"

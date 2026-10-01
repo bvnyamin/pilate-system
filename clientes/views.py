@@ -6,9 +6,16 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
+
+from asistencias.models import Asistencia
+from mensualidades.models import ClientePlan
+from pagos.models import Pago
 
 from .forms import ClienteForm
-from .models import Cliente
+from .models import Cliente, SolicitudAltaCliente
+from .medical_views import puede_importar, puede_ver
 
 
 class ClienteListView(LoginRequiredMixin, ListView):
@@ -43,6 +50,10 @@ class ClienteListView(LoginRequiredMixin, ListView):
                 "search_query": self.request.GET.get("q", "").strip(),
                 "selected_status": self.request.GET.get("estado", "").strip(),
                 "total_clientes": self.get_queryset().count(),
+                "puede_importar_fichas": puede_importar(self.request.user),
+                "solicitudes_altas_pendientes": SolicitudAltaCliente.objects.filter(
+                    estado=SolicitudAltaCliente.Estado.PENDIENTE
+                ).count() if puede_importar(self.request.user) else 0,
             }
         )
         return context
@@ -78,6 +89,7 @@ class ClienteUpdateView(LoginRequiredMixin, UpdateView):
         return reverse("clientes:detail", kwargs={"pk": self.object.pk})
 
 
+@method_decorator(never_cache, name="dispatch")
 class ClienteDetailView(LoginRequiredMixin, DetailView):
     model = Cliente
     template_name = "clientes/detail.html"
@@ -86,6 +98,23 @@ class ClienteDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["page_title"] = self.object.nombres
+        context["puede_ver_fichas"] = puede_ver(self.request.user)
+        context["puede_importar_fichas"] = puede_importar(self.request.user)
+        if context["puede_ver_fichas"]:
+            context["fichas_medicas"] = self.object.fichas_medicas.select_related("importacion", "asociada_por")
+        context["planes_cliente"] = ClientePlan.objects.filter(
+            cliente=self.object
+        ).select_related("plan")
+        context["pagos_cliente"] = Pago.objects.filter(
+            Q(cliente=self.object) | Q(cliente_plan__cliente=self.object)
+        ).select_related("cliente", "cliente_plan__plan")
+        context["matricula_cliente"] = Pago.objects.filter(
+            cliente=self.object,
+            tipo_pago=Pago.TipoPago.MATRICULA,
+        ).first()
+        context["asistencias_cliente"] = Asistencia.objects.filter(
+            cliente_plan__cliente=self.object
+        ).select_related("sesion", "cliente_plan__plan")
         return context
 
 

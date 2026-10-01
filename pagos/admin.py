@@ -7,6 +7,7 @@ from .models import Pago
 class PagoAdmin(admin.ModelAdmin):
     list_display = (
         "fecha_pago",
+        "tipo_pago",
         "cliente_nombre",
         "mensualidad_periodo",
         "concepto",
@@ -17,6 +18,9 @@ class PagoAdmin(admin.ModelAdmin):
     list_filter = ("estado_pago", "metodo_pago", "fecha_pago")
     search_fields = (
         "concepto",
+        "cliente__nombres",
+        "cliente__apellidos",
+        "cliente__rut",
         "cliente_plan__cliente__nombres",
         "cliente_plan__cliente__apellidos",
         "cliente_plan__cliente__rut",
@@ -29,11 +33,11 @@ class PagoAdmin(admin.ModelAdmin):
 
     @admin.display(description="Clienta")
     def cliente_nombre(self, pago):
-        return pago.cliente_plan.cliente
+        return pago.cliente_asociado
 
     @admin.display(description="Período")
     def mensualidad_periodo(self, pago):
-        return pago.cliente_plan.periodo
+        return pago.referencia_display
 
     def has_delete_permission(self, request, obj=None):
         return False

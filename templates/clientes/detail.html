@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load clientes_formatters %}
+{% load clientes_formatters planes_formatters %}
 {% block title %}{{ cliente }}{% endblock %}
 {% block content %}
 <a class="back-link" href="{% url 'clientes:list' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a clientes</a>
@@ -22,14 +22,31 @@
     </div>
 </section>
 
-<nav class="client-detail-tabs" aria-label="Secciones de la ficha">
-    <a class="active" href="#resumen" aria-current="page">Resumen</a>
-    <span aria-disabled="true" title="Disponible al implementar mensualidades">Planes</span>
-    <span aria-disabled="true" title="Disponible al implementar pagos">Pagos</span>
-    <span aria-disabled="true" title="Disponible al implementar asistencias">Asistencias</span>
+<nav class="client-detail-tabs" role="tablist" aria-label="Secciones de la ficha">
+    <button class="active" id="resumen-tab" data-bs-toggle="tab" data-bs-target="#resumen" type="button" role="tab" aria-controls="resumen" aria-selected="true">Resumen</button>
+    <button id="planes-tab" data-bs-toggle="tab" data-bs-target="#planes" type="button" role="tab" aria-controls="planes" aria-selected="false">Planes <span class="client-tab-count">{{ planes_cliente|length }}</span></button>
+    <button id="pagos-tab" data-bs-toggle="tab" data-bs-target="#pagos" type="button" role="tab" aria-controls="pagos" aria-selected="false">Pagos <span class="client-tab-count">{{ pagos_cliente|length }}</span></button>
+    <button id="asistencias-tab" data-bs-toggle="tab" data-bs-target="#asistencias" type="button" role="tab" aria-controls="asistencias" aria-selected="false">Asistencias <span class="client-tab-count">{{ asistencias_cliente|length }}</span></button>
+    {% if puede_ver_fichas %}<button id="medica-tab" data-bs-toggle="tab" data-bs-target="#medica" type="button" role="tab" aria-controls="medica" aria-selected="false">Ficha médica <span class="client-tab-count">{{ fichas_medicas|length }}</span></button>{% endif %}
 </nav>
 
-<section class="row g-4" id="resumen">
+<div class="tab-content client-detail-tab-content">
+{% if puede_ver_fichas %}
+<section class="tab-pane fade" id="medica" role="tabpanel" aria-labelledby="medica-tab" tabindex="0">
+    <article class="content-card client-history-card">
+        <div class="card-heading-row"><div><span class="section-eyebrow">Antecedentes de salud</span><h3>Ficha médica</h3></div>{% if puede_importar_fichas %}<a class="btn btn-outline-light" href="{% url 'clientes:medical_import' %}">Importar respuestas</a>{% endif %}</div>
+        {% for ficha in fichas_medicas %}
+        <details class="medical-answer-details"{% if forloop.first %} open{% endif %}>
+            <summary>{% if forloop.first %}Ficha vigente{% else %}Ficha anterior{% endif %} · {{ ficha.respondida_en|date:"d/m/Y H:i" }}</summary>
+            <p class="form-help-text">Asociada por {{ ficha.criterio_asociacion|lower }} · Importada {{ ficha.created_at|date:"d/m/Y H:i" }}{% if ficha.motivo_asociacion %} · {{ ficha.motivo_asociacion }}{% endif %}</p>
+            <dl class="medical-answer-grid">{% for respuesta in ficha.respuestas %}<div><dt>{{ respuesta.pregunta }}</dt><dd>{{ respuesta.respuesta|default:"No informado"|linebreaksbr }}</dd></div>{% endfor %}</dl>
+        </details>
+        {% empty %}<div class="client-history-empty"><i class="bi bi-file-earmark-medical" aria-hidden="true"></i><h4>Ficha pendiente</h4><p>No hay una ficha médica asociada a esta clienta.</p></div>{% endfor %}
+    </article>
+</section>
+{% endif %}
+<section class="tab-pane fade show active" id="resumen" role="tabpanel" aria-labelledby="resumen-tab" tabindex="0">
+<div class="row g-4">
     <div class="col-xl-8">
         <article class="content-card profile-info-card">
             <div class="card-heading-row"><div><span class="section-eyebrow">Resumen</span><h3>Información personal</h3></div></div>
@@ -64,5 +81,64 @@
             <div class="profile-record-date"><i class="bi bi-clock-history" aria-hidden="true"></i><span>Ficha creada {{ cliente.created_at|date:"d/m/Y" }}</span></div>
         </article>
     </div>
+</div>
 </section>
+
+<section class="tab-pane fade" id="planes" role="tabpanel" aria-labelledby="planes-tab" tabindex="0">
+    <article class="content-card client-history-card">
+        <div class="card-heading-row"><div><span class="section-eyebrow">Historial contratado</span><h3>Planes de {{ cliente.nombres }}</h3></div></div>
+        {% if planes_cliente %}
+            <div class="client-history-list">
+                {% for plan in planes_cliente %}
+                    <article class="client-history-item">
+                        <div><h4>{{ plan.plan.nombre }}</h4><p>{{ plan.periodo }} · {{ plan.fecha_inicio|date:"d/m/Y" }} – {{ plan.fecha_fin|date:"d/m/Y" }} · {{ plan.plan.clases_por_mes }} clases/mes</p></div>
+                        <div class="client-history-meta"><strong>{{ plan.precio_final_clp|clp }}</strong><span class="status-badge status-{{ plan.estado }}">{{ plan.get_estado_display }}</span></div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="client-history-empty"><i class="bi bi-calendar2-month" aria-hidden="true"></i><h4>Sin planes registrados</h4><p>Cuando se asigne una mensualidad, aparecerá aquí su período, precio y estado.</p></div>
+        {% endif %}
+    </article>
+</section>
+
+<section class="tab-pane fade" id="pagos" role="tabpanel" aria-labelledby="pagos-tab" tabindex="0">
+    <article class="content-card client-history-card">
+        <div class="card-heading-row"><div><span class="section-eyebrow">Historial financiero</span><h3>Pagos de {{ cliente.nombres }}</h3></div></div>
+        <div class="client-matricula-status">
+            <div><span class="section-eyebrow">Matrícula</span><p>Pago único por clienta · $25.000 CLP</p></div>
+            {% if matricula_cliente %}
+                <span class="status-badge status-{{ matricula_cliente.estado_pago }}">{{ matricula_cliente.get_estado_pago_display }}</span>
+            {% else %}
+                <span class="status-badge status-no-registrada">No registrada</span>
+                <a class="btn btn-outline-light" href="{% url 'pagos:create' %}?tipo_pago=matricula&amp;cliente={{ cliente.pk }}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Registrar matrícula</a>
+            {% endif %}
+        </div>
+        {% if pagos_cliente %}
+            <div class="table-responsive">
+                <table class="table client-table align-middle mb-0"><thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo / período</th><th>Método</th><th>Monto</th><th>Estado</th></tr></thead><tbody>
+                    {% for pago in pagos_cliente %}<tr><td data-label="Fecha">{{ pago.fecha_pago|date:"d/m/Y" }}</td><td data-label="Concepto">{{ pago.concepto }}</td><td data-label="Tipo / período">{{ pago.referencia_display }}</td><td data-label="Método">{{ pago.get_metodo_pago_display }}</td><td data-label="Monto">{{ pago.monto_clp|clp }}</td><td data-label="Estado"><span class="status-badge status-{{ pago.estado_pago }}">{{ pago.get_estado_pago_display }}</span></td></tr>{% endfor %}
+                </tbody></table>
+            </div>
+        {% else %}
+            <div class="client-history-empty"><i class="bi bi-credit-card" aria-hidden="true"></i><h4>Sin pagos registrados</h4><p>Los pagos asociados a sus planes se mostrarán en este historial.</p></div>
+        {% endif %}
+    </article>
+</section>
+
+<section class="tab-pane fade" id="asistencias" role="tabpanel" aria-labelledby="asistencias-tab" tabindex="0">
+    <article class="content-card client-history-card">
+        <div class="card-heading-row"><div><span class="section-eyebrow">Registro de clases</span><h3>Asistencias de {{ cliente.nombres }}</h3></div></div>
+        {% if asistencias_cliente %}
+            <div class="table-responsive">
+                <table class="table client-table align-middle mb-0"><thead><tr><th>Fecha</th><th>Hora</th><th>Sesión</th><th>Plan</th><th>Estado</th></tr></thead><tbody>
+                    {% for asistencia in asistencias_cliente %}<tr><td data-label="Fecha">{{ asistencia.sesion.fecha|date:"d/m/Y" }}</td><td data-label="Hora">{{ asistencia.sesion.hora|time:"H:i" }} hrs</td><td data-label="Sesión">{{ asistencia.sesion.nombre }}</td><td data-label="Plan">{{ asistencia.cliente_plan.plan.nombre }}</td><td data-label="Estado"><span class="status-badge status-{{ asistencia.estado }}">{{ asistencia.get_estado_display }}</span></td></tr>{% endfor %}
+                </tbody></table>
+            </div>
+        {% else %}
+            <div class="client-history-empty"><i class="bi bi-calendar2-check" aria-hidden="true"></i><h4>Sin asistencias registradas</h4><p>El historial de clases aparecerá aquí al registrar sesiones para sus mensualidades.</p></div>
+        {% endif %}
+    </article>
+</section>
+</div>
 {% endblock %}

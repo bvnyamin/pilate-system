@@ -1,4 +1,3 @@
-import calendar
 from datetime import date
 
 from django import forms
@@ -8,7 +7,7 @@ from django.utils import timezone
 from clientes.models import Cliente
 from planes.models import Plan
 
-from .models import ClientePlan
+from .models import ClientePlan, calcular_fecha_fin_mensual
 
 
 class PlanPriceSelect(forms.Select):
@@ -57,8 +56,18 @@ class ClientePlanForm(forms.ModelForm):
             "cliente": forms.Select(attrs={"data-cliente-plan-field": "cliente"}),
             "plan": PlanPriceSelect(attrs={"data-cliente-plan-field": "plan"}),
             "periodo_anio": forms.NumberInput(attrs={"min": 2000, "max": 32767, "step": 1}),
-            "fecha_inicio": forms.DateInput(attrs={"type": "date"}),
-            "fecha_fin": forms.DateInput(attrs={"type": "date"}),
+            "fecha_inicio": forms.DateInput(
+                format="%Y-%m-%d",
+                attrs={"type": "date", "data-cliente-plan-field": "fecha-inicio"},
+            ),
+            "fecha_fin": forms.DateInput(
+                format="%Y-%m-%d",
+                attrs={
+                    "type": "date",
+                    "readonly": True,
+                    "aria-describedby": "fecha-fin-help",
+                }
+            ),
             "descuento_porcentaje": forms.NumberInput(attrs={"min": 0, "max": 100, "step": "0.01", "data-cliente-plan-field": "descuento"}),
             "estado": forms.Select(),
         }
@@ -66,6 +75,7 @@ class ClientePlanForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["cliente"].queryset = Cliente.objects.filter(estado=Cliente.Estado.ACTIVA).order_by("apellidos", "nombres")
+        self.fields["fecha_fin"].required = False
         self.fields["plan"].queryset = Plan.objects.filter(estado=Plan.Estado.ACTIVO).order_by("precio_lista_clp", "nombre")
         if self.instance and self.instance.pk:
             self.fields["cliente"].queryset = Cliente.objects.filter(
@@ -77,14 +87,30 @@ class ClientePlanForm(forms.ModelForm):
 
         today = timezone.localdate()
         if not self.instance.pk:
-            last_day = calendar.monthrange(today.year, today.month)[1]
             self.initial.setdefault("periodo_mes", today.month)
             self.initial.setdefault("periodo_anio", today.year)
             self.initial.setdefault("fecha_inicio", date(today.year, today.month, 1))
-            self.initial.setdefault("fecha_fin", date(today.year, today.month, last_day))
+            fecha_inicio_inicial = self.fields["fecha_inicio"].to_python(
+                self.initial["fecha_inicio"]
+            )
+            self.initial.setdefault(
+                "fecha_fin",
+                calcular_fecha_fin_mensual(fecha_inicio_inicial),
+            )
 
         for field in self.fields.values():
             field.widget.attrs["class"] = "form-control"
         self.fields["estado"].widget.attrs["class"] = "form-select"
         self.fields["descuento_porcentaje"].widget.attrs["inputmode"] = "decimal"
         self.fields["plan"].help_text = "El precio base se toma del catálogo y queda guardado para este período."
+
+    def clean(self):
+        cleaned_data = super().clean()
+        fecha_inicio = cleaned_data.get("fecha_inicio")
+        if fecha_inicio:
+            fecha_inicio_cambio = not self.instance.pk or fecha_inicio != self.instance.fecha_inicio
+            if fecha_inicio_cambio:
+                cleaned_data["fecha_fin"] = calcular_fecha_fin_mensual(fecha_inicio)
+            elif not cleaned_data.get("fecha_fin"):
+                cleaned_data["fecha_fin"] = self.instance.fecha_fin
+        return cleaned_data
