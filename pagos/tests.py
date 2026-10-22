@@ -401,6 +401,7 @@ class PagoViewsTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Matrícula única")
+        self.assertContains(response, 'data-input-format="clp"')
         self.assertContains(response, 'name="monto_clp" value="25000"')
 
         self.client.post(reverse("pagos:create"), self.datos_formulario_matricula())
@@ -429,6 +430,8 @@ class PagoViewsTests(TestCase):
 
     def test_update_payment(self):
         pago = self.crear_pago()
+        editing = self.client.get(reverse("pagos:update", kwargs={"pk": pago.pk}))
+        self.assertContains(editing, f'href="{reverse("pagos:list")}"')
 
         response = self.client.post(
             reverse("pagos:update", kwargs={"pk": pago.pk}),
@@ -557,6 +560,37 @@ class CuotasTests(TestCase):
         self.assertEqual(self.mensualidad.saldo_pendiente_clp, 26910)
         listing = self.client.get(reverse("pagos:cuotas"))
         self.assertContains(listing, "1 de 2 pendientes")
+
+    def test_cancel_payment_from_installment_returns_to_its_list(self):
+        self.crear_pago()
+        self.client.post(
+            reverse("pagos:cuotas_create"),
+            {"cliente_plan": self.mensualidad.pk, "cantidad": 2, "fecha_primera_cuota": "2026-06-10"},
+        )
+        cuota = Cuota.objects.get(cliente_plan=self.mensualidad, numero=1)
+        return_to = f"{reverse('pagos:cuotas')}?q=Maria&page=1"
+
+        response = self.client.get(
+            reverse("pagos:create"),
+            {"cuota": cuota.pk, "return_to": return_to},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["cancel_url"], return_to)
+        self.assertContains(response, f'href="{reverse("pagos:cuotas")}?q=Maria&amp;page=1"')
+
+        invalid = self.client.post(
+            reverse("pagos:create"),
+            {"cuota": cuota.pk, "return_to": return_to},
+        )
+        self.assertEqual(invalid.status_code, 200)
+        self.assertEqual(invalid.context["cancel_url"], return_to)
+
+        unsafe = self.client.get(
+            reverse("pagos:create"),
+            {"cuota": cuota.pk, "return_to": "https://example.com/"},
+        )
+        self.assertEqual(unsafe.context["cancel_url"], reverse("pagos:cuotas"))
 
     def test_no_duplica_acuerdo_ni_programa_sobre_movimiento_pendiente(self):
         pendiente = self.crear_pago(estado_pago=Pago.EstadoPago.PENDIENTE)

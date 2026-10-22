@@ -1,3 +1,4 @@
+{% load planes_formatters %}
 <header class="app-header">
     <div class="header-title-group">
         <button class="header-icon d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar" aria-label="Abrir navegación"><i class="bi bi-list" aria-hidden="true"></i></button>
@@ -7,7 +8,31 @@
         </div>
     </div>
     <div class="header-actions">
-        <button class="header-icon d-none d-sm-grid" type="button" disabled aria-label="Notificaciones, próximamente"><i class="bi bi-bell" aria-hidden="true"></i></button>
+        {% if request.user.is_staff %}<div class="notification-menu" data-notification-menu>
+            <button class="header-icon notification-bell" type="button" data-notification-trigger aria-expanded="false" aria-controls="notification-panel" aria-haspopup="dialog" aria-label="Notificaciones{% if notification_count %}, {{ notification_count }} mensualidad{% if notification_count != 1 %}es{% endif %} pendiente{% if notification_count != 1 %}s{% endif %}{% endif %}">
+                <i class="bi bi-bell" aria-hidden="true"></i>
+                {% if notification_count %}<span class="notification-count" aria-hidden="true">{{ notification_count }}</span>{% endif %}
+            </button>
+            <section class="notification-panel" id="notification-panel" data-notification-panel role="dialog" aria-labelledby="notification-panel-title" hidden>
+                <div class="notification-panel-heading">
+                    <div><span class="section-eyebrow">{{ notification_period|date:"F Y" }}</span><h2 id="notification-panel-title">Notificaciones</h2></div>
+                    <span class="notification-total">{{ notification_count }}</span>
+                    <button class="notification-panel-close" type="button" data-notification-close aria-label="Cerrar notificaciones"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                </div>
+                {% if notification_count %}
+                    <div class="notification-panel-list">
+                        {% for mensualidad in notification_items %}<a class="notification-panel-item" href="{% url 'clientes:detail' mensualidad.cliente.pk %}">
+                            <span class="notification-panel-item-main"><strong>{{ mensualidad.cliente }}</strong><span>{{ mensualidad.plan }} · {{ mensualidad.periodo_mes }}/{{ mensualidad.periodo_anio }}</span></span>
+                            <span class="notification-panel-balance">{{ mensualidad.saldo_aviso|clp }}</span>
+                        </a>{% endfor %}
+                    </div>
+                {% elif not notification_is_active %}
+                    <div class="notification-panel-empty"><i class="bi bi-calendar-check" aria-hidden="true"></i><p>Aún dentro del plazo de pago. Los avisos se activan desde el día 7.</p></div>
+                {% else %}
+                    <div class="notification-panel-empty"><i class="bi bi-check-circle" aria-hidden="true"></i><p>No hay mensualidades atrasadas este mes.</p></div>
+                {% endif %}
+            </section>
+        </div>{% endif %}
         <div class="header-user">
             <span class="header-avatar" aria-hidden="true">{{ request.user.first_name|default:request.user.username|first|upper }}</span>
             <span class="header-user-name d-none d-md-inline">{{ request.user.get_full_name|default:request.user.username }}</span>

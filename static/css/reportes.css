@@ -46,10 +46,23 @@
 .report-category-list strong { font-weight: 600; }
 .report-month-table-card { padding-bottom: 8px; }
 .report-month-table-card .card-heading-row { margin-bottom: 15px; }
-.report-month-table th { color: var(--aldra-text-muted); font-size: .69rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
-.report-month-table td, .report-month-table th { padding: 12px 10px; border-color: var(--aldra-border-soft); font-size: .8rem; }
+.report-month-table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--aldra-text);
+    --bs-table-border-color: var(--aldra-border-soft);
+    --bs-table-hover-bg: rgba(255, 255, 255, .025);
+    --bs-table-hover-color: var(--aldra-text);
+    width: 100%;
+}
+.report-month-table th { color: #c6b2ae; font-size: .69rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
+.report-month-table thead th { padding: 13px 11px; white-space: nowrap; }
+.report-month-table td, .report-month-table tfoot th { padding: 13px 11px; border-color: var(--aldra-border-soft); font-size: .8rem; }
+.report-month-table tbody tr { transition: background-color 120ms ease-out; }
+.report-month-table tbody tr:hover { background: rgba(255, 255, 255, .025); }
+.report-month-table td[data-label="Mes"] { color: var(--aldra-text); font-weight: 500; white-space: nowrap; }
+.report-month-table td[data-label="Ingresos"], .report-month-table td[data-label="Gastos"], .report-month-table td[data-label="Balance"], .report-month-table tfoot th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
 .report-month-table td strong, .report-month-table tfoot th { color: var(--aldra-text); }
-.report-month-table tfoot th { border-top: 1px solid var(--aldra-border); }
+.report-month-table tfoot th { border-top: 1px solid var(--aldra-border); font-weight: 700; }
 .report-subnav { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .report-list-filters { display: flex; align-items: center; gap: 9px; }
 .report-expense-filter { display: flex; align-items: center; gap: 9px; }
@@ -59,9 +72,26 @@
 .report-expenses-card { overflow: hidden; padding: 0 22px 10px; }
 .report-expenses-total { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 17px 0; border-bottom: 1px solid var(--aldra-border-soft); }
 .report-expenses-total > strong { font-size: 1.5rem; }
-.report-expense-table th { color: var(--aldra-text-muted); font-size: .68rem; letter-spacing: .05em; text-transform: uppercase; }
-.report-expense-table th, .report-expense-table td { padding: 13px 9px; border-color: var(--aldra-border-soft); font-size: .78rem; }
+.report-expenses-table-wrap { overflow-x: auto; }
+.report-expense-table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--aldra-text);
+    --bs-table-border-color: var(--aldra-border-soft);
+    --bs-table-hover-bg: rgba(255, 255, 255, .025);
+    --bs-table-hover-color: var(--aldra-text);
+    width: 100%;
+}
+.report-expense-table thead { background: transparent; }
+.report-expense-table th { color: var(--aldra-text-muted); font-size: .68rem; letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; }
+.report-expense-table th, .report-expense-table td { padding: 13px 11px; border-color: var(--aldra-border-soft); font-size: .78rem; }
 .report-expense-table td { color: var(--aldra-text); }
+.report-expense-table tbody tr { transition: background-color 120ms ease-out; }
+.report-expense-table tbody tr:hover { background: rgba(255, 255, 255, .025); }
+.report-expense-table td[data-label="Fecha"] { color: var(--aldra-text-muted); white-space: nowrap; }
+.report-expense-table td[data-label="Descripción"] { min-width: 150px; font-weight: 500; }
+.report-expense-table td[data-label="Observación"] { min-width: 160px; color: var(--aldra-text-muted); }
+.report-expense-table td[data-label="Monto"] { text-align: right; font-variant-numeric: tabular-nums; }
+.report-expense-table th:nth-last-child(1), .report-expense-table td[data-label="Acciones"] { width: 56px; text-align: center; }
 .report-category-chip { display: inline-flex; padding: 5px 8px; border: 1px solid var(--aldra-border-soft); border-radius: 20px; color: var(--aldra-secondary); font-size: .7rem; white-space: nowrap; }
 .report-expense-table td strong { white-space: nowrap; }
 .report-pagination { justify-content: center; margin: 14px 0 4px; }
@@ -94,6 +124,8 @@
     .report-kpi-grid, .report-detail-grid { grid-template-columns: 1fr; gap: 11px; }
     .report-kpi { min-height: 112px; }
     .report-chart-card, .report-detail-card, .report-month-table-card { padding: 18px 15px; }
+    .report-month-table-card .card-heading-row { align-items: flex-start; gap: 10px; }
+    .report-month-table-card .card-heading-row > a { flex: 0 0 auto; padding: 9px 10px; font-size: .75rem; }
     .report-chart-card .card-heading-row { align-items: flex-start; flex-direction: column; gap: 10px; }
     .report-bars { gap: 4px; min-height: 155px; margin-top: 15px; }
     .report-bar-pair { height: 118px; gap: 2px; }
@@ -108,18 +140,46 @@
     .report-expenses-total { align-items: flex-start; padding: 15px 0; }
     .report-expenses-total > span { max-width: 18ch; font-size: .74rem; }
     .report-expenses-total > strong { font-size: 1.35rem; }
+    .report-month-table-wrap { overflow: visible; }
+    .report-month-table thead { display: none; }
+    .report-month-table tbody, .report-month-table tfoot { display: grid; }
+    .report-month-table tbody tr, .report-month-table tfoot tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; padding: 14px 7px; border: 0; border-bottom: 1px solid var(--aldra-border-soft); background: transparent; }
+    .report-month-table tbody tr:hover { background: rgba(255, 255, 255, .025); }
+    .report-month-table tbody td, .report-month-table tfoot th { display: block; min-width: 0; padding: 0 4px; border: 0; background: transparent !important; box-shadow: none !important; text-align: left; overflow-wrap: anywhere; }
+    .report-month-table tbody td[data-label]::before, .report-month-table tfoot th[data-label]::before { display: block; margin-bottom: 4px; color: var(--aldra-text-muted); content: attr(data-label); font-size: .62rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+    .report-month-table tbody td[data-label="Mes"] { grid-column: 1 / -1; grid-row: 1; font-size: .88rem; }
+    .report-month-table tbody td[data-label="Ingresos"] { grid-column: 1; grid-row: 2; }
+    .report-month-table tbody td[data-label="Gastos"] { grid-column: 2; grid-row: 2; }
+    .report-month-table tbody td[data-label="Balance"] { display: flex; grid-column: 1 / -1; grid-row: 3; align-items: center; justify-content: space-between; gap: 10px; margin-top: 2px; padding: 8px 4px 0; border-top: 1px solid var(--aldra-border-soft); text-align: right; }
+    .report-month-table tbody td[data-label="Balance"]::before { margin: 0; }
+    .report-month-table tbody td[data-label="Balance"] strong { white-space: nowrap; }
+    .report-month-table tfoot tr { margin-top: 4px; border-top: 1px solid var(--aldra-border); border-bottom: 0; }
+    .report-month-table tfoot th:first-child { grid-column: 1 / -1; grid-row: 1; color: var(--aldra-primary-soft); }
+    .report-month-table tfoot th[data-label="Ingresos"] { grid-column: 1; grid-row: 2; }
+    .report-month-table tfoot th[data-label="Gastos"] { grid-column: 2; grid-row: 2; }
+    .report-month-table tfoot th[data-label="Balance simple"] { display: flex; grid-column: 1 / -1; grid-row: 3; align-items: center; justify-content: space-between; gap: 10px; padding-top: 8px; border-top: 1px solid var(--aldra-border-soft); text-align: right; }
+    .report-month-table tfoot th[data-label="Balance simple"]::before { margin: 0; }
     .report-expense-table thead { display: none; }
-    .report-expense-table { --bs-table-bg: transparent; --bs-table-color: var(--aldra-text); }
-    .report-expense-table tbody { display: grid; gap: 10px; padding-top: 12px; }
-    .report-expense-table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px 12px; padding: 13px 12px; border: 1px solid var(--aldra-border-soft); border-radius: 11px; background: rgba(255, 255, 255, .018); }
-    .report-expense-table tbody td { display: block; min-width: 0; padding: 0; border: 0; background: transparent !important; box-shadow: none !important; color: var(--aldra-text); overflow-wrap: anywhere; }
-    .report-expense-table tbody td[data-label]::before { display: block; margin-bottom: 3px; color: var(--aldra-text-muted); content: attr(data-label); font-size: .59rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+    .report-expenses-table-wrap { overflow: visible; }
+    .report-expense-table tbody { display: grid; gap: 0; padding-top: 4px; }
+    .report-expense-table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px 10px; padding: 14px 8px; border: 0; border-bottom: 1px solid var(--aldra-border-soft); border-radius: 0; background: transparent; }
+    .report-expense-table tbody tr:hover { background: rgba(255, 255, 255, .025); }
+    .report-expense-table tbody td { display: block; min-width: 0; padding: 0 4px; border: 0; background: transparent !important; box-shadow: none !important; color: var(--aldra-text); overflow-wrap: anywhere; }
+    .report-expense-table tbody td[data-label]::before { display: block; margin-bottom: 4px; color: var(--aldra-text-muted); content: attr(data-label); font-size: .62rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+    .report-expense-table tbody td[data-label="Acciones"]::before { content: none; }
     .report-expense-table tbody td[data-label="Fecha"] { grid-column: 1; grid-row: 1; }
     .report-expense-table tbody td[data-label="Categoría"] { grid-column: 2; grid-row: 1; justify-self: end; }
     .report-expense-table tbody td[data-label="Descripción"] { grid-column: 1 / -1; grid-row: 2; }
     .report-expense-table tbody td[data-label="Observación"] { grid-column: 1 / -1; grid-row: 3; }
-    .report-expense-table tbody td[data-label="Monto"] { grid-column: 1; grid-row: 4; }
-    .report-expense-table tbody td[data-label="Acciones"] { grid-column: 2; grid-row: 4; justify-self: end; align-self: end; }
+    .report-expense-table tbody td.report-expense-observation-empty { display: none; }
+    .report-expense-table tbody tr.report-expense-no-observation td[data-label="Monto"] { grid-column: 1; grid-row: 3; }
+    .report-expense-table tbody tr.report-expense-no-observation td[data-label="Acciones"] { grid-column: 2; grid-row: 3; justify-self: end; align-self: end; }
+    .report-expense-table tbody tr:not(.report-expense-no-observation) td[data-label="Monto"] { grid-column: 1; grid-row: 4; }
+    .report-expense-table tbody tr:not(.report-expense-no-observation) td[data-label="Acciones"] { grid-column: 2; grid-row: 4; justify-self: end; align-self: end; }
+    .report-expense-table td[data-label="Monto"] { text-align: left; }
+    .report-expense-table td[data-label="Fecha"] { white-space: normal; }
+    .report-expense-table td[data-label="Descripción"], .report-expense-table td[data-label="Observación"] { min-width: 0; }
+    .report-expense-table td[data-label="Acciones"] .btn { display: inline-grid; width: 44px; height: 44px; place-items: center; padding: 0; }
     .report-expense-fields { grid-template-columns: 1fr; gap: 15px; }
     .report-expense-notes { grid-column: auto; }
     .report-expense-form { width: 100%; padding: 20px 16px; }

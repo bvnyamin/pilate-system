@@ -49,53 +49,62 @@
         </nav>
         <details class="payment-filter-details"{% if selected_status or selected_method or selected_type or selected_month or selected_date_from or selected_date_to %} open{% endif %}>
             <summary class="btn btn-outline-light"><i class="bi bi-sliders" aria-hidden="true"></i> Filtros</summary>
+            <button class="payment-filter-backdrop" type="button" data-payment-filter-dismiss aria-label="Cerrar filtros"></button>
             <div class="payment-filter-panel">
-                <label>
-                    <span>Tipo de pago</span>
-                    <select name="tipo" class="form-select" aria-label="Filtrar por tipo de pago">
-                        <option value="">Todos los tipos</option>
-                        {% for value, label in type_choices %}<option value="{{ value }}"{% if selected_type == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
-                    </select>
-                </label>
-                <div class="payment-month-picker" data-month-picker data-current-year="{{ current_year }}">
-                    <span class="payment-filter-label">Mes</span>
-                    <input type="hidden" name="mes" value="{{ selected_month }}" data-month-value>
-                    <div class="payment-month-picker-heading">
-                        <button type="button" data-year-step="-1" aria-label="Año anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></button>
-                        <strong data-month-year>{{ current_year }}</strong>
-                        <button type="button" data-year-step="1" aria-label="Año siguiente"><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+                <header class="payment-filter-heading">
+                    <div><span class="section-eyebrow">Historial</span><h3>Filtrar pagos</h3></div>
+                    <button type="button" data-payment-filter-dismiss aria-label="Cerrar filtros"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                </header>
+                <div class="payment-filter-content">
+                    <label>
+                        <span>Tipo de pago</span>
+                        <select name="tipo" class="form-select" aria-label="Filtrar por tipo de pago">
+                            <option value="">Todos los tipos</option>
+                            {% for value, label in type_choices %}<option value="{{ value }}"{% if selected_type == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+                        </select>
+                    </label>
+                    <div class="payment-month-picker" data-month-picker data-current-year="{{ current_year }}">
+                        <span class="payment-filter-label">Mes</span>
+                        <input type="hidden" name="mes" value="{{ selected_month }}" data-month-value>
+                        <div class="payment-month-picker-heading">
+                            <button type="button" data-year-step="-1" aria-label="Año anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></button>
+                            <strong data-month-year>{{ current_year }}</strong>
+                            <button type="button" data-year-step="1" aria-label="Año siguiente"><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+                        </div>
+                        <div class="payment-month-grid" role="group" aria-label="Seleccionar mes">
+                            <button type="button" data-month-number="1">Ene</button><button type="button" data-month-number="2">Feb</button><button type="button" data-month-number="3">Mar</button>
+                            <button type="button" data-month-number="4">Abr</button><button type="button" data-month-number="5">May</button><button type="button" data-month-number="6">Jun</button>
+                            <button type="button" data-month-number="7">Jul</button><button type="button" data-month-number="8">Ago</button><button type="button" data-month-number="9">Sep</button>
+                            <button type="button" data-month-number="10">Oct</button><button type="button" data-month-number="11">Nov</button><button type="button" data-month-number="12">Dic</button>
+                        </div>
+                        <div class="payment-month-picker-footer">
+                            <span data-month-caption aria-live="polite">Todos los meses</span>
+                            <button type="button" class="payment-month-clear" data-month-clear>Ver todos</button>
+                        </div>
                     </div>
-                    <div class="payment-month-grid" role="group" aria-label="Seleccionar mes">
-                        <button type="button" data-month-number="1">Ene</button><button type="button" data-month-number="2">Feb</button><button type="button" data-month-number="3">Mar</button>
-                        <button type="button" data-month-number="4">Abr</button><button type="button" data-month-number="5">May</button><button type="button" data-month-number="6">Jun</button>
-                        <button type="button" data-month-number="7">Jul</button><button type="button" data-month-number="8">Ago</button><button type="button" data-month-number="9">Sep</button>
-                        <button type="button" data-month-number="10">Oct</button><button type="button" data-month-number="11">Nov</button><button type="button" data-month-number="12">Dic</button>
+                    <div class="payment-filter-date-range">
+                        <label><span>Desde</span><input type="date" name="desde" class="form-control" value="{{ selected_date_from }}" aria-label="Fecha desde"></label>
+                        <label><span>Hasta</span><input type="date" name="hasta" class="form-control" value="{{ selected_date_to }}" aria-label="Fecha hasta"></label>
                     </div>
-                    <div class="payment-month-picker-footer">
-                        <span data-month-caption aria-live="polite">Todos los meses</span>
-                        <button type="button" class="payment-month-clear" data-month-clear>Ver todos</button>
-                    </div>
+                    <label>
+                        <span>Estado</span>
+                        <select name="estado" class="form-select" aria-label="Filtrar por estado">
+                            <option value="">Todos los estados</option>
+                            {% for value, label in status_choices %}<option value="{{ value }}"{% if selected_status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+                        </select>
+                    </label>
+                    <label>
+                        <span>Método</span>
+                        <select name="metodo" class="form-select" aria-label="Filtrar por método de pago">
+                            <option value="">Todos los métodos</option>
+                            {% for value, label in method_choices %}<option value="{{ value }}"{% if selected_method == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+                        </select>
+                    </label>
                 </div>
-                <div class="payment-filter-date-range">
-                    <label><span>Desde</span><input type="date" name="desde" class="form-control" value="{{ selected_date_from }}" aria-label="Fecha desde"></label>
-                    <label><span>Hasta</span><input type="date" name="hasta" class="form-control" value="{{ selected_date_to }}" aria-label="Fecha hasta"></label>
-                </div>
-                <label>
-                    <span>Estado</span>
-                    <select name="estado" class="form-select" aria-label="Filtrar por estado">
-                        <option value="">Todos los estados</option>
-                        {% for value, label in status_choices %}<option value="{{ value }}"{% if selected_status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
-                    </select>
-                </label>
-                <label>
-                    <span>Método</span>
-                    <select name="metodo" class="form-select" aria-label="Filtrar por método de pago">
-                        <option value="">Todos los métodos</option>
-                        {% for value, label in method_choices %}<option value="{{ value }}"{% if selected_method == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
-                    </select>
-                </label>
-                <button class="btn btn-primary" type="submit">Aplicar filtros</button>
-                <a class="btn btn-quiet" href="{% url 'pagos:list' %}">Limpiar filtros</a>
+                <footer class="payment-filter-actions">
+                    <a class="btn btn-quiet" href="{% url 'pagos:list' %}">Limpiar filtros</a>
+                    <button class="btn btn-primary" type="submit">Aplicar filtros</button>
+                </footer>
             </div>
         </details>
         <a class="btn btn-quiet payment-export-link" href="{% url 'pagos:export' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
@@ -133,7 +142,7 @@
                             <td data-label="Fecha">{{ pago.fecha_pago|date:"d M, Y" }}</td>
                             <td data-label="Estado"><span class="status-badge status-{{ pago.estado_pago }}">{{ pago.get_estado_pago_display }}</span></td>
                             <td data-label="Acciones" class="payment-table-actions">
-                                <details class="payment-row-menu">
+                                <details class="payment-row-menu" data-payment-row-menu>
                                     <summary aria-label="Acciones para el pago de {{ pago.cliente_asociado }}"><i class="bi bi-three-dots-vertical" aria-hidden="true"></i></summary>
                                     <div class="payment-row-menu-panel">
                                         <a href="{% url 'pagos:update' pago.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</a>

@@ -111,7 +111,7 @@ class PagoForm(forms.ModelForm):
             "cuota": CuotaSelect(attrs={"data-payment-field": "cuota"}),
             "cliente": forms.Select(attrs={"data-payment-field": "cliente"}),
             "concepto": forms.TextInput(attrs={"placeholder": "Ej. Mensualidad octubre"}),
-            "monto_clp": forms.NumberInput(attrs={"min": 1, "step": 1, "inputmode": "numeric", "placeholder": "Ej. 53820"}),
+            "monto_clp": forms.TextInput(attrs={"inputmode": "numeric", "data-input-format": "clp", "autocomplete": "off", "placeholder": "Ej. 53.820"}),
             "metodo_pago": forms.Select(),
             "fecha_pago": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
             "estado_pago": forms.Select(),
@@ -178,7 +178,7 @@ class PagoForm(forms.ModelForm):
         self.fields["observaciones"].required = False
         self.fields["concepto"].required = False
         self.fields["monto_clp"].required = False
-        self.fields["monto_clp"].help_text = "Monto de este movimiento, no el total de la mensualidad."
+        self.fields["monto_clp"].help_text = "Monto de este movimiento en pesos chilenos; se agrupa automáticamente."
 
     def clean(self):
         cleaned_data = super().clean()

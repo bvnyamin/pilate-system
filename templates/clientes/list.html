@@ -6,7 +6,7 @@
     <div>
         <span class="section-eyebrow">Relaciones del estudio</span>
         <h2>Clientes</h2>
-        <p>Administra los datos de las alumnas de Aldra Pilates.</p>
+        <p>Administra los datos de las alumnas de Aledra Pilates.</p>
     </div>
     <div class="client-profile-actions">
     {% if puede_importar_fichas %}<a class="btn btn-outline-light" href="{% url 'clientes:medical_import' %}"><i class="bi bi-file-earmark-medical" aria-hidden="true"></i> Importar fichas médicas</a><a class="btn btn-outline-light" href="{% url 'clientes:medical_requests' %}"><i class="bi bi-person-check" aria-hidden="true"></i> Solicitudes ({{ solicitudes_altas_pendientes }})</a>{% endif %}

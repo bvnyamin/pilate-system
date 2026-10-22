@@ -27,6 +27,14 @@ class ReportesViewTests(TestCase):
         response = self.client.get(reverse("reportes:index"))
         self.assertEqual(response.status_code, 302)
 
+    def test_formulario_gasto_habilita_formato_monetario_clp(self):
+        response = self.client.get(reverse("reportes:gasto_create"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="monto_clp"')
+        self.assertContains(response, 'data-input-format="clp"')
+        self.assertContains(response, "los puntos se agregan automáticamente")
+
     def test_reporte_compara_ingresos_confirmados_y_gastos_por_anio(self):
         Pago.objects.create(
             tipo_pago=Pago.TipoPago.MATRICULA,

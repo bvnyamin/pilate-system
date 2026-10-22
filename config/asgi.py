@@ -1,4 +1,4 @@
-"""ASGI config for Aldra Pilates."""
+"""ASGI config for Aledra Pilates."""
 
 import os
 

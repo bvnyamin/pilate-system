@@ -38,14 +38,19 @@
                 <div class="cuotas-grid">
                     {% for cuota in mensualidad.cuotas_programadas %}
                         <article class="cuota-card{% if not cuota.saldo_pendiente_clp %} is-paid{% endif %}">
-                            <div class="cuota-card-top"><strong>Cuota {{ cuota.numero }} / {{ mensualidad.cuotas_programadas|length }}</strong><span>{{ cuota.fecha_vencimiento|date:"d/m/Y" }}</span></div>
-                            <div class="cuota-card-amount">{{ cuota.monto_clp|clp }}</div>
-                            <div class="cuota-card-balance">Recibido {{ cuota.total_pagado_clp|clp }} · Falta {{ cuota.saldo_pendiente_clp|clp }}</div>
+                            <div class="cuota-card-main">
+                                <div class="cuota-card-top"><strong>Cuota {{ cuota.numero }} / {{ mensualidad.cuotas_programadas|length }}</strong><span>Vence {{ cuota.fecha_vencimiento|date:"d/m/Y" }}</span></div>
+                                <div class="cuota-card-amount">{{ cuota.monto_clp|clp }}</div>
+                                <div class="cuota-card-balance"><span>Recibido {{ cuota.total_pagado_clp|clp }}</span><span>Falta {{ cuota.saldo_pendiente_clp|clp }}</span></div>
+                            </div>
+                            <div class="cuota-card-action">
                             {% if cuota.saldo_pendiente_clp %}
-                                <a class="btn btn-outline-light" href="{% url 'pagos:create' %}?cuota={{ cuota.pk }}">Registrar pago <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                                <span class="status-badge status-pendiente">Pendiente</span>
+                                <a class="btn btn-outline-light" href="{% url 'pagos:create' %}?cuota={{ cuota.pk }}&amp;return_to={{ return_to_url|urlencode }}">Registrar pago <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
                             {% else %}
                                 <span class="cuota-card-complete"><i class="bi bi-check-circle" aria-hidden="true"></i> Pagada</span>
                             {% endif %}
+                            </div>
                         </article>
                     {% endfor %}
                 </div>

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static planes_formatters %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/reportes.css' %}?v=1">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/reportes.css' %}?v=2">{% endblock %}
 {% block title %}Reportes{% endblock %}
 {% block content %}
 <section class="page-intro-row report-page-heading">
@@ -38,6 +38,6 @@
 
 <section class="content-card report-month-table-card">
     <div class="card-heading-row"><div><span class="section-eyebrow">Detalle anual</span><h3>Resumen por mes</h3></div><a class="btn btn-outline-light" href="{% url 'reportes:gastos' %}?anio={{ anio }}">Ver gastos <i class="bi bi-arrow-right" aria-hidden="true"></i></a></div>
-    <div class="table-responsive"><table class="table report-month-table align-middle mb-0"><thead><tr><th>Mes</th><th>Ingresos</th><th>Gastos</th><th>Balance simple</th></tr></thead><tbody>{% for mes in meses %}<tr><td data-label="Mes">{{ mes.nombre }} {{ anio }}</td><td data-label="Ingresos">{{ mes.ingresos|clp }}</td><td data-label="Gastos">{{ mes.gastos|clp }}</td><td data-label="Balance"><strong>{{ mes.balance|clp }}</strong></td></tr>{% endfor %}</tbody><tfoot><tr><th>Total {{ anio }}</th><th>{{ total_ingresos|clp }}</th><th>{{ total_gastos|clp }}</th><th>{{ balance_anual|clp }}</th></tr></tfoot></table></div>
+    <div class="table-responsive report-month-table-wrap"><table class="table report-month-table align-middle mb-0"><thead><tr><th scope="col">Mes</th><th scope="col">Ingresos</th><th scope="col">Gastos</th><th scope="col">Balance simple</th></tr></thead><tbody>{% for mes in meses %}<tr><td data-label="Mes">{{ mes.nombre }} {{ anio }}</td><td data-label="Ingresos">{{ mes.ingresos|clp }}</td><td data-label="Gastos">{{ mes.gastos|clp }}</td><td data-label="Balance"><strong>{{ mes.balance|clp }}</strong></td></tr>{% endfor %}</tbody><tfoot><tr><th scope="row">Total {{ anio }}</th><th data-label="Ingresos">{{ total_ingresos|clp }}</th><th data-label="Gastos">{{ total_gastos|clp }}</th><th data-label="Balance simple">{{ balance_anual|clp }}</th></tr></tfoot></table></div>
 </section>
 {% endblock %}

@@ -1,4 +1,4 @@
-# Aldra Pilates
+# Aledra Pilates
 
 Aplicación administrativa para un estudio boutique de Pilates, construida como un monolito modular con Django y PostgreSQL.
 
@@ -45,6 +45,18 @@ El servicio PostgreSQL solo está disponible dentro de la red de Docker; no publ
 En **Pagos → Ver cuotas → Programar cuotas**, seleccionar una mensualidad, entre 2 y 12 cuotas y la fecha del primer vencimiento. El sistema divide el saldo pendiente en pesos enteros, agrega el posible resto a la última cuota y programa vencimientos mensuales.
 
 Programar las cuotas no registra ingresos ni reduce el saldo. Cada tarjeta muestra lo recibido, lo pendiente y permite registrar uno o varios abonos para esa cuota. Al completar o anular un abono, los saldos y el número de cuotas pendientes se recalculan. Si la mensualidad tiene un movimiento pendiente anterior, hay que resolverlo o anularlo antes de programar cuotas para evitar duplicar el cobro.
+
+## Aviso de mensualidades pendientes
+
+Desde el día 7 de cada mes, la campana del panel muestra las mensualidades vigentes del período que todavía tienen saldo. La alerta considera pagos confirmados y abonos parciales; no descuenta pagos pendientes o anulados. Para enviar el resumen por correo una vez al mes, configura SMTP y `NOTIFICATION_ADMIN_EMAILS`, y ejecuta `python manage.py enviar_aviso_morosidad` con una tarea programada diaria. En desarrollo, el backend de consola solo escribe el mensaje en los logs.
+
+### Correo y acceso Google
+
+Resend Free puede enviar este resumen agrupado y otros avisos de bajo volumen. En producción configura `EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend`, `EMAIL_HOST=smtp.resend.com`, `EMAIL_PORT=587`, `EMAIL_HOST_USER=resend`, `EMAIL_HOST_PASSWORD` con una API key de Resend y `EMAIL_USE_TLS=True`. El `DEFAULT_FROM_EMAIL` debe usar un dominio verificado en Resend. No guardes claves en Git ni en este archivo.
+
+El acceso Google es opcional y solo se muestra cuando `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` y `GOOGLE_LOGIN_ALLOWED_EMAILS` están configurados. Solo pueden entrar cuentas administrativas (`is_staff`) ya existentes en la base de datos, con correo Google verificado que coincida con la lista permitida; no se crean perfiles al iniciar sesión. En Google Cloud registra `/accounts/google/login/callback/` como URI de redirección autorizada. El login local actual permanece disponible.
+
+En desarrollo local, la URI de redirección es `http://127.0.0.1:8000/accounts/google/login/callback/`. Usa credenciales distintas para desarrollo y producción. Para activar Resend en producción también necesitas acceso DNS al dominio remitente para publicar los registros de verificación que indique Resend.
 
 ## Bloques horarios de asistencia
 

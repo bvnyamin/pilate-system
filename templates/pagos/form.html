@@ -2,8 +2,8 @@
 {% load static %}
 {% block title %}{{ page_title }}{% endblock %}
 {% block content %}
-<div class="form-page-wrap">
-    <a class="back-link" href="{% url 'pagos:list' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a pagos</a>
+<div class="form-page-wrap payment-entry-page">
+    <a class="back-link" href="{{ cancel_url }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> {{ cancel_label }}</a>
     <section class="page-intro-row form-page-heading">
         <div>
             <span class="section-eyebrow">Movimiento financiero</span>
@@ -14,6 +14,7 @@
 
     <form method="post" novalidate data-payment-form>
         {% csrf_token %}
+        <input type="hidden" name="return_to" value="{{ cancel_url }}">
         {% if form.non_field_errors %}<div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>{% endif %}
         <div class="row g-4">
             <div class="col-12 col-xl-8">
@@ -44,15 +45,15 @@
                         <div><dt>Recibido antes</dt><dd id="payment-received-total">—</dd></div>
                     </dl>
                     <div class="payment-balance-line"><span>Saldo antes de este movimiento</span><strong id="payment-balance">—</strong></div>
-                    <p>Los pagos parciales se registran como movimientos separados. Si hay cuotas programadas, selecciona cuál estás pagando. Los movimientos pendientes o anulados no reducen el saldo.</p>
+                    <p>Los pagos pendientes o anulados no reducen el saldo de la mensualidad.</p>
                 </aside>
             </div>
         </div>
         <div class="form-actions">
-            <a class="btn btn-outline-light" href="{% url 'pagos:list' %}">Cancelar</a>
+            <a class="btn btn-outline-light" href="{{ cancel_url }}">Cancelar</a>
             <button class="btn btn-primary" type="submit"><i class="bi bi-check2" aria-hidden="true"></i> Guardar movimiento</button>
         </div>
     </form>
 </div>
 {% endblock %}
-{% block extra_js %}<script src="{% static 'js/pagos.js' %}?v=3"></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/pagos.js' %}?v=4"></script>{% endblock %}

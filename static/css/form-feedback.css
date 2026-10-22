@@ -1,0 +1,32 @@
+.is-submitting button.is-loading,
+.is-submitting input.is-loading {
+    gap: .5rem;
+    cursor: wait;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.is-submitting button[type="submit"]:not(.is-loading),
+.is-submitting button:not([type]):not(.is-loading),
+.is-submitting input[type="submit"]:not(.is-loading) {
+    cursor: wait;
+}
+
+.submit-feedback-spinner {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    flex: 0 0 auto;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: submit-feedback-spin 700ms linear infinite;
+}
+
+@keyframes submit-feedback-spin {
+    to { transform: rotate(1turn); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .submit-feedback-spinner { animation: none; }
+}

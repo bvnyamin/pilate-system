@@ -24,7 +24,7 @@
                     <div class="col-12{% if field.name == 'nombre' or field.name == 'estado' %} col-md-6{% endif %}">
                         <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="required-marker"> *</span>{% endif %}</label>
                         {{ field }}
-                        {% if field.name == 'precio_lista_clp' %}<div class="form-help-text">Ingresa el monto en pesos, sin puntos ni decimales.</div>{% endif %}
+                        {% if field.name == 'precio_lista_clp' and not field.help_text %}<div class="form-help-text">Ingresa pesos chilenos; los puntos se agregan automáticamente.</div>{% endif %}
                         {% if field.help_text %}<div class="form-help-text">{{ field.help_text }}</div>{% endif %}
                         {% for error in field.errors %}<div class="invalid-feedback d-block" role="alert">{{ error }}</div>{% endfor %}
                     </div>

@@ -1,0 +1,24 @@
+.notification-page-heading { margin-bottom: 24px; }
+.notification-card { padding: clamp(16px, 2.2vw, 24px); }
+.notification-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.notification-card-heading h3 { margin: 4px 0 0; font-size: 1.2rem; }
+.notification-total { display: grid; min-width: 38px; height: 38px; place-items: center; padding-inline: 8px; border: 1px solid rgba(255, 141, 126, .28); border-radius: 999px; background: rgba(255, 141, 126, .1); color: var(--aldra-primary, #ff8d7e); font-weight: 700; }
+.notification-table { --bs-table-bg: transparent; --bs-table-color: var(--aldra-text); --bs-table-border-color: var(--aldra-border-soft); --bs-table-hover-bg: rgba(255, 255, 255, .025); --bs-table-hover-color: var(--aldra-text); }
+.notification-table thead th { color: var(--aldra-text-muted); font-size: .7rem; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; }
+.notification-table td strong { font-weight: 600; }
+.notification-footnote { margin: 14px 0 0; color: var(--aldra-text-muted); font-size: .76rem; }
+.notification-empty { display: grid; justify-items: center; gap: 6px; padding: 48px 16px; text-align: center; }
+.notification-empty > i { margin-bottom: 6px; color: var(--aldra-primary, #ff8d7e); font-size: 1.65rem; }
+.notification-empty h4 { margin: 0; font-size: 1rem; }
+.notification-empty p { margin: 0; color: var(--aldra-text-muted); font-size: .86rem; }
+@media (max-width: 767.98px) {
+    .notification-page-heading { margin-bottom: 16px; }
+    .notification-card { padding: 14px 12px; }
+    .notification-table thead { display: none; }
+    .notification-table tbody { display: grid; gap: 9px; }
+    .notification-table tr { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 12px; padding: 11px; border: 1px solid var(--aldra-border-soft); border-radius: var(--aldra-radius-sm, 12px); background: rgba(255,255,255,.018); }
+    .notification-table td { display: grid; gap: 3px; min-width: 0; padding: 0; border: 0; font-size: .8rem; overflow-wrap: anywhere; }
+    .notification-table td::before { content: attr(data-label); color: var(--aldra-text-muted); font-size: .62rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+    .notification-table td:last-child { grid-column: 1 / -1; justify-self: end; }
+    .notification-table td:last-child::before { content: none; }
+}

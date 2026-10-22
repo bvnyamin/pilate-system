@@ -10,7 +10,7 @@ class PlanForm(forms.ModelForm):
         widgets = {
             "nombre": forms.TextInput(attrs={"placeholder": "Ej. FLUYE"}),
             "clases_por_mes": forms.NumberInput(attrs={"min": 1, "step": 1}),
-            "precio_lista_clp": forms.NumberInput(attrs={"min": 1, "step": 1, "inputmode": "numeric"}),
+            "precio_lista_clp": forms.TextInput(attrs={"inputmode": "numeric", "data-input-format": "clp", "autocomplete": "off"}),
             "descripcion": forms.Textarea(attrs={"rows": 4, "placeholder": "Describe brevemente a quién está dirigido este plan"}),
             "estado": forms.Select(),
         }
@@ -21,3 +21,4 @@ class PlanForm(forms.ModelForm):
             field.widget.attrs["class"] = "form-control"
         self.fields["estado"].widget.attrs["class"] = "form-select"
         self.fields["descripcion"].required = False
+        self.fields["precio_lista_clp"].help_text = "Ingresa pesos chilenos; los puntos se agregan automáticamente."

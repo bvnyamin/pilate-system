@@ -56,6 +56,7 @@
             amountInput.readOnly = isMatricula;
             conceptInput.value = isMatricula ? "Matrícula" : monthlyConcept;
             amountInput.value = isMatricula ? "25000" : monthlyAmount;
+            window.aldraFormatClpInput?.(amountInput);
         }
         if (statusSelect) {
             const partialOption = Array.from(statusSelect.options).find((option) => option.value === "parcial");

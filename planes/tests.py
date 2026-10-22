@@ -59,6 +59,14 @@ class PlanViewsTests(TestCase):
         self.assertEqual(plan.clases_por_mes, 6)
         self.assertEqual(plan.precio_lista_clp, 58000)
 
+    def test_formulario_plan_habilita_formato_monetario_clp(self):
+        response = self.client.get(reverse("planes:create"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="precio_lista_clp"')
+        self.assertContains(response, 'data-input-format="clp"')
+        self.assertContains(response, "los puntos se agregan automáticamente")
+
     def test_create_rejects_non_positive_values(self):
         response = self.client.post(
             reverse("planes:create"),

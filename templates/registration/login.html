@@ -1,11 +1,12 @@
 {% extends "base_auth.html" %}
+{% load socialaccount %}
 {% block title %}Iniciar sesión{% endblock %}
 {% block content %}
 <main class="auth-shell">
     <section class="auth-brand-panel" aria-labelledby="brand-heading">
         <div class="auth-brand-content">
             <span class="auth-eyebrow">Wellness Studio</span>
-            <h1 id="brand-heading">ALDRA<br>PILATES</h1>
+            <h1 id="brand-heading">ALEDRA<br>PILATES</h1>
             <p>Administración serena para un estudio en movimiento.</p>
         </div>
         <div class="auth-brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
@@ -13,7 +14,7 @@
     <section class="auth-form-panel">
         <div class="auth-card">
             <div class="auth-mobile-brand d-lg-none">
-                <span class="brand-name">ALDRA PILATES</span>
+                <span class="brand-name">ALEDRA PILATES</span>
                 <span class="brand-subtitle">Wellness Studio</span>
             </div>
             <span class="auth-eyebrow">Acceso administrativo</span>
@@ -34,6 +35,15 @@
                 <input type="hidden" name="next" value="{{ next }}">
                 <button class="btn btn-primary auth-submit" type="submit">Ingresar<i class="bi bi-arrow-right" aria-hidden="true"></i></button>
             </form>
+            {% if google_login_enabled %}
+            <div class="auth-divider" role="separator"><span>o</span></div>
+            <form method="post" action="{% provider_login_url 'google' process='login' %}" class="auth-form">
+                {% csrf_token %}
+                <button class="btn btn-outline-light auth-submit justify-content-center" type="submit">
+                    <i class="bi bi-google" aria-hidden="true"></i> Continuar con Google
+                </button>
+            </form>
+            {% endif %}
         </div>
     </section>
 </main>

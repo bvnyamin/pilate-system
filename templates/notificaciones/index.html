@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load static planes_formatters %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/notificaciones.css' %}?v=1">{% endblock %}
+{% block title %}Notificaciones{% endblock %}
+{% block content %}
+<section class="page-intro-row notification-page-heading">
+    <div><span class="section-eyebrow">Seguimiento financiero</span><h2>Notificaciones</h2><p>Avisos de mensualidades que siguen pendientes después del día 7.</p></div>
+</section>
+<section class="content-card notification-card" aria-labelledby="notification-list-title">
+    <div class="notification-card-heading"><div><span class="section-eyebrow">{{ fecha_hoy|date:"F Y" }}</span><h3 id="notification-list-title">Mensualidades pendientes</h3></div><span class="notification-total">{{ avisos_activos }}</span></div>
+    {% if fecha_hoy.day < 7 %}
+        <div class="notification-empty"><i class="bi bi-calendar-check" aria-hidden="true"></i><h4>Aún dentro del plazo de pago</h4><p>El aviso de morosidad se activa desde el día 7 de cada mes.</p></div>
+    {% elif mensualidades_morosas %}
+        <div class="table-responsive notification-table-wrap"><table class="table notification-table align-middle mb-0"><thead><tr><th>Clienta</th><th>Plan</th><th>Período</th><th>Saldo pendiente</th><th><span class="visually-hidden">Acción</span></th></tr></thead><tbody>
+            {% for mensualidad in mensualidades_morosas %}<tr><td data-label="Clienta"><strong>{{ mensualidad.cliente }}</strong></td><td data-label="Plan">{{ mensualidad.plan }}</td><td data-label="Período">{{ mensualidad.periodo }}</td><td data-label="Saldo pendiente"><strong>{{ mensualidad.saldo_aviso|clp }}</strong></td><td data-label="Acción"><a class="btn btn-sm btn-outline-light" href="{% url 'clientes:detail' mensualidad.cliente.pk %}">Ver ficha</a></td></tr>{% endfor %}
+        </tbody></table></div>
+        <p class="notification-footnote">El saldo considera pagos realizados o abonos parciales; pagos anulados y pendientes no se descuentan.</p>
+    {% else %}
+        <div class="notification-empty"><i class="bi bi-check-circle" aria-hidden="true"></i><h4>Sin mensualidades atrasadas</h4><p>No hay saldos pendientes para el período actual.</p></div>
+    {% endif %}
+</section>
+{% endblock %}

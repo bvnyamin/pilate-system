@@ -1,4 +1,4 @@
-"""Shared Django settings for all Aldra Pilates environments."""
+"""Shared Django settings for all Aledra Pilates environments."""
 
 import os
 from pathlib import Path
@@ -47,6 +47,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
     "core.apps.CoreConfig",
     "usuarios.apps.UsuariosConfig",
     "clientes.apps.ClientesConfig",
@@ -56,6 +61,7 @@ INSTALLED_APPS = [
     "asistencias.apps.AsistenciasConfig",
     "dashboard.apps.DashboardConfig",
     "reportes.apps.ReportesConfig",
+    "notificaciones.apps.NotificacionesConfig",
 ]
 
 MIDDLEWARE = [
@@ -65,6 +71,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -81,6 +88,8 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "notificaciones.context_processors.resumen",
+                "usuarios.context_processors.google_login",
             ],
         },
     },
@@ -129,6 +138,37 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTH_USER_MODEL = "usuarios.Usuario"
+SITE_ID = 1
+
+# Google OAuth is optional until credentials and an explicit administrator
+# allowlist are configured. Social signup remains closed in all environments.
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "").strip()
+GOOGLE_LOGIN_ALLOWED_EMAILS = [
+    email.lower() for email in env_list("GOOGLE_LOGIN_ALLOWED_EMAILS")
+]
+GOOGLE_LOGIN_ENABLED = bool(
+    GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET and GOOGLE_LOGIN_ALLOWED_EMAILS
+)
+
+ACCOUNT_ADAPTER = "usuarios.adapters.ClosedAccountAdapter"
+SOCIALACCOUNT_AUTO_SIGNUP = False
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_ADAPTER = "usuarios.adapters.AdminGoogleSocialAccountAdapter"
+SOCIALACCOUNT_LOGIN_ON_GET = False
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APPS": ([{
+            "client_id": GOOGLE_CLIENT_ID,
+            "secret": GOOGLE_CLIENT_SECRET,
+            "key": "",
+        }] if GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET else []),
+        "EMAIL_AUTHENTICATION": True,
+        "VERIFIED_EMAIL": True,
+        "SCOPE": ["openid", "email", "profile"],
+        "OAUTH_PKCE_ENABLED": True,
+    }
+}
 
 LANGUAGE_CODE = "es-cl"
 TIME_ZONE = "America/Santiago"
@@ -151,6 +191,19 @@ MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend",
+)
+EMAIL_HOST = os.getenv("EMAIL_HOST", "")
+EMAIL_PORT = env_int("EMAIL_PORT", 587)
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", default=True)
+EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", default=False)
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Aledra Pilates <no-reply@localhost>")
+NOTIFICATION_ADMIN_EMAILS = env_list("NOTIFICATION_ADMIN_EMAILS")
 
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "dashboard:index"

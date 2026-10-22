@@ -1,4 +1,4 @@
-"""WSGI config for Aldra Pilates."""
+"""WSGI config for Aledra Pilates."""
 
 import os
 

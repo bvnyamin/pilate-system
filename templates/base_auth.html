@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#1a1110">
-    <title>{% block title %}Acceso{% endblock %} | Aldra Pilates</title>
+    <title>{% block title %}Acceso{% endblock %} | Aledra Pilates</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Playfair+Display:wght@500;600&amp;display=swap" rel="stylesheet">
@@ -15,9 +15,11 @@
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <link rel="stylesheet" href="{% static 'css/components.css' %}">
     <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+    <link rel="stylesheet" href="{% static 'css/form-feedback.css' %}?v=1">
 </head>
 <body class="auth-body">
     {% block content %}{% endblock %}
     <script src="{% static 'js/app.js' %}"></script>
+    <script src="{% static 'js/form-feedback.js' %}?v=1"></script>
 </body>
 </html>

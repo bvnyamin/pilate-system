@@ -29,6 +29,27 @@
 .header-icon { display: grid; width: 40px; height: 40px; place-items: center; border: 1px solid transparent; border-radius: 50%; background: transparent; color: var(--aldra-text-muted); font-size: 1.25rem; }
 .header-icon:not(:disabled):hover { border-color: var(--aldra-border); color: var(--aldra-primary-soft); }
 .header-icon:disabled { opacity: 0.6; }
+.notification-bell { position: relative; text-decoration: none; }
+.notification-count { position: absolute; top: 0; right: 0; display: grid; min-width: 18px; height: 18px; place-items: center; padding: 0 4px; border: 2px solid var(--aldra-bg, #1a1110); border-radius: 999px; background: var(--aldra-primary, #ff8d7e); color: #1a1110; font-size: .62rem; font-weight: 700; line-height: 1; transform: translate(20%, -20%); }
+.notification-menu { position: relative; }
+.notification-panel[hidden] { display: none !important; }
+.notification-panel { position: absolute; top: calc(100% + 10px); right: 0; z-index: 1080; display: flex; width: min(410px, calc(100vw - 24px)); max-height: min(72vh, 560px); flex-direction: column; overflow: hidden; border: 1px solid var(--aldra-border); border-radius: 15px; background: var(--aldra-surface-high); box-shadow: 0 18px 48px rgba(0, 0, 0, .38); }
+.notification-panel-heading { display: flex; align-items: center; gap: 12px; padding: 16px 17px 13px; border-bottom: 1px solid var(--aldra-border-soft); }
+.notification-panel-heading > div { min-width: 0; flex: 1; }
+.notification-panel-heading h2 { margin: 3px 0 0; color: var(--aldra-text); font-size: 1rem; font-weight: 600; }
+.notification-panel-heading .section-eyebrow { font-size: .62rem; }
+.notification-panel-close { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; border: 1px solid var(--aldra-border-soft); border-radius: 9px; background: transparent; color: var(--aldra-text-muted); }
+.notification-panel-list { display: grid; overflow: auto; overscroll-behavior: contain; }
+.notification-panel-item { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 17px; border-bottom: 1px solid var(--aldra-border-soft); color: inherit; text-decoration: none; transition: background-color 140ms ease; }
+.notification-panel-item:last-child { border-bottom: 0; }
+.notification-panel-item:hover, .notification-panel-item:focus-visible { background: rgba(255, 255, 255, .045); }
+.notification-panel-item-main { display: grid; min-width: 0; gap: 4px; }
+.notification-panel-item-main strong { overflow: hidden; color: var(--aldra-text); font-size: .82rem; text-overflow: ellipsis; white-space: nowrap; }
+.notification-panel-item-main > span { overflow: hidden; color: var(--aldra-text-muted); font-size: .72rem; text-overflow: ellipsis; white-space: nowrap; }
+.notification-panel-balance { flex: 0 0 auto; color: var(--aldra-primary-soft); font-size: .8rem; font-weight: 600; white-space: nowrap; }
+.notification-panel-empty { display: grid; justify-items: center; gap: 9px; padding: 30px 22px; color: var(--aldra-text-muted); text-align: center; }
+.notification-panel-empty i { color: var(--aldra-primary-soft); font-size: 1.5rem; }
+.notification-panel-empty p { max-width: 290px; margin: 0; font-size: .8rem; line-height: 1.55; }
 .header-user { gap: 10px; padding-left: 4px; }
 .header-avatar { display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid var(--aldra-primary); border-radius: 50%; background: linear-gradient(145deg, var(--aldra-surface-highest), var(--aldra-surface)); color: var(--aldra-primary-soft); font-family: "Playfair Display", serif; font-size: 1.05rem; }
 .header-user-name { max-width: 180px; overflow: hidden; color: var(--aldra-text); font-size: 0.86rem; text-overflow: ellipsis; white-space: nowrap; }
@@ -113,6 +134,9 @@
 .auth-form .form-control:focus { border-color: var(--aldra-primary); background: var(--aldra-surface); box-shadow: 0 0 0 0.2rem rgba(255, 138, 122, 0.13); color: var(--aldra-text); }
 .auth-form .form-floating > label { color: var(--aldra-text-muted); }
 .auth-submit { display: flex; min-height: 52px; align-items: center; justify-content: space-between; margin-top: 8px; padding-inline: 20px; }
+.auth-divider { display: flex; align-items: center; gap: 14px; margin: 18px 0 8px; color: var(--aldra-text-muted); font-size: .85rem; }
+.auth-divider::before, .auth-divider::after { flex: 1; height: 1px; background: var(--aldra-border); content: ""; }
+.auth-form .auth-submit.justify-content-center { justify-content: center; gap: 10px; }
 .auth-mobile-brand { display: flex; flex-direction: column; margin-bottom: 36px; }
 
 .page-intro-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
@@ -394,7 +418,15 @@
 .payment-filter-details { position: relative; flex: 0 0 auto; }
 .payment-filter-details > summary { --bs-btn-color: var(--aldra-text); --bs-btn-border-color: var(--aldra-border); --bs-btn-hover-color: var(--aldra-text); --bs-btn-hover-bg: rgba(255, 255, 255, .04); --bs-btn-hover-border-color: var(--aldra-primary); --bs-btn-active-color: var(--aldra-primary-soft); --bs-btn-active-bg: rgba(255, 138, 122, .12); --bs-btn-active-border-color: var(--aldra-primary); display: flex; min-height: 42px; align-items: center; gap: 8px; list-style: none; cursor: pointer; }
 .payment-filter-details > summary::-webkit-details-marker { display: none; }
-.payment-filter-panel { position: absolute; top: calc(100% + 9px); right: 0; z-index: 20; display: grid; width: min(360px, calc(100vw - 32px)); max-height: min(76vh, 680px); gap: 12px; overflow-y: auto; overscroll-behavior: contain; padding: 17px; border: 1px solid var(--aldra-border); border-radius: var(--aldra-radius-sm); background: var(--aldra-surface-high); box-shadow: var(--aldra-shadow); scrollbar-width: thin; }
+.payment-filter-panel { position: absolute; top: calc(100% + 9px); right: 0; z-index: 20; display: grid; width: min(360px, calc(100vw - 32px)); max-height: min(76vh, 680px); grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; padding: 0; border: 1px solid var(--aldra-border); border-radius: var(--aldra-radius-sm); background: var(--aldra-surface-high); box-shadow: var(--aldra-shadow); }
+.payment-filter-panel.is-floating { position: fixed; top: var(--payment-filter-top, 12px); right: auto; left: var(--payment-filter-left, 12px); }
+.payment-filter-backdrop { display: none; }
+.payment-filter-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px 11px; border-bottom: 1px solid var(--aldra-border-soft); }
+.payment-filter-heading h3 { margin: 3px 0 0; color: var(--aldra-text); font-size: .98rem; }
+.payment-filter-heading > button { display: grid; width: 36px; height: 36px; flex: 0 0 auto; place-items: center; border: 1px solid var(--aldra-border-soft); border-radius: 9px; background: transparent; color: var(--aldra-text-muted); }
+.payment-filter-content { display: grid; min-height: 0; gap: 12px; overflow-y: auto; overscroll-behavior: contain; padding: 14px 16px; scrollbar-width: thin; }
+.payment-filter-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 16px; border-top: 1px solid var(--aldra-border-soft); background: var(--aldra-surface-high); }
+.payment-filter-actions .btn { min-height: 40px; }
 .payment-filter-panel label { display: grid; gap: 6px; margin: 0; color: var(--aldra-text-muted); font-size: .7rem; }
 .payment-filter-panel .form-select, .payment-filter-panel .form-control { min-height: 40px; border-color: var(--aldra-border); background-color: var(--aldra-card); color: var(--aldra-text); font-size: .8rem; }
 .payment-filter-date-range { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
@@ -450,10 +482,13 @@
 .payment-table .status-badge { min-width: 0; padding: 5px 9px; white-space: nowrap; }
 .payment-table-actions { width: 40px; text-align: center; }
 .payment-row-menu { position: relative; display: inline-block; }
-.payment-row-menu > summary { display: grid; width: 32px; height: 32px; place-items: center; border: 1px solid transparent; border-radius: var(--aldra-radius-sm); color: var(--aldra-text-muted); list-style: none; cursor: pointer; }
+.payment-row-menu > summary { display: grid; width: 40px; height: 40px; place-items: center; border: 1px solid transparent; border-radius: var(--aldra-radius-sm); color: var(--aldra-text-muted); list-style: none; cursor: pointer; touch-action: manipulation; }
 .payment-row-menu > summary::-webkit-details-marker { display: none; }
 .payment-row-menu[open] > summary, .payment-row-menu > summary:hover { border-color: var(--aldra-border); color: var(--aldra-primary-soft); }
 .payment-row-menu-panel { position: absolute; top: 100%; right: 0; z-index: 25; display: grid; min-width: 140px; gap: 3px; padding: 6px; border: 1px solid var(--aldra-border); border-radius: var(--aldra-radius-sm); background: var(--aldra-surface-high); box-shadow: var(--aldra-shadow); text-align: left; }
+.payment-row-menu.opens-up .payment-row-menu-panel { top: auto; bottom: 100%; }
+.payment-row-menu-panel.is-floating { position: fixed; z-index: 1400; top: var(--payment-menu-top, 12px); right: auto; bottom: auto; left: var(--payment-menu-left, 12px); }
+.payment-row-menu.opens-up .payment-row-menu-panel.is-floating { top: var(--payment-menu-top, 12px); bottom: auto; }
 .payment-row-menu-panel a, .payment-row-menu-panel button { display: flex; width: 100%; align-items: center; gap: 9px; padding: 8px 9px; border: 0; border-radius: 5px; background: transparent; color: var(--aldra-text); font: inherit; font-size: .75rem; text-decoration: none; white-space: nowrap; }
 .payment-row-menu-panel a:hover, .payment-row-menu-panel button:hover { background: rgba(255, 255, 255, .06); color: var(--aldra-primary-soft); }
 .payment-row-menu-panel form { margin: 0; }
@@ -478,21 +513,24 @@
 .payment-quota-label { display: block; margin-top: 5px; color: var(--aldra-primary-soft); font-size: .7rem; }
 .cuotas-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin: 10px 0 20px; }
 .cuotas-toolbar .client-search { min-width: min(100%, 290px); }
-.cuotas-list { display: grid; gap: 18px; }
-.cuotas-plan-card { min-height: 0; padding: 24px; }
+.cuotas-list { display: grid; gap: 14px; }
+.cuotas-plan-card { min-height: 0; padding: 20px; }
 .cuotas-plan-heading { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 .cuotas-plan-heading h3 { margin: 6px 0 0; font-size: 1.22rem; }
-.cuotas-plan-summary { display: flex; flex-wrap: wrap; gap: 10px 26px; margin: 18px 0; padding: 14px 0; border-block: 1px solid var(--aldra-border-soft); color: var(--aldra-text-muted); font-size: .8rem; }
-.cuotas-plan-summary strong { margin-left: 6px; color: var(--aldra-text); font-size: .9rem; }
-.cuotas-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 10px; }
-.cuota-card { display: grid; align-content: start; gap: 11px; min-width: 0; padding: 15px; border: 1px solid var(--aldra-border); border-radius: var(--aldra-radius-sm); background: var(--aldra-surface-low); }
+.cuotas-plan-summary { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 14px 0; padding: 10px 0; border-block: 1px solid var(--aldra-border-soft); color: var(--aldra-text-muted); font-size: .76rem; }
+.cuotas-plan-summary strong { margin-left: 5px; color: var(--aldra-text); font-size: .84rem; }
+.cuotas-grid { display: grid; gap: 7px; }
+.cuota-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; min-width: 0; padding: 10px 12px; border: 1px solid var(--aldra-border); border-radius: var(--aldra-radius-sm); background: var(--aldra-surface-low); }
 .cuota-card.is-paid { border-color: rgba(57, 170, 112, .28); }
-.cuota-card-top { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 4px 10px; color: var(--aldra-text); font-size: .77rem; }
+.cuota-card-main { display: grid; grid-template-columns: minmax(130px, 1fr) auto minmax(150px, .85fr); align-items: center; gap: 8px 16px; min-width: 0; }
+.cuota-card-top { display: flex; align-items: center; flex-wrap: wrap; gap: 3px 9px; color: var(--aldra-text); font-size: .74rem; }
 .cuota-card-top span { color: var(--aldra-text-muted); }
-.cuota-card-amount { color: var(--aldra-primary-soft); font-family: "Playfair Display", serif; font-size: 1.36rem; }
-.cuota-card-balance { color: var(--aldra-text-muted); font-size: .72rem; line-height: 1.5; }
-.cuota-card .btn { align-self: end; display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; font-size: .75rem; }
-.cuota-card-complete { align-self: end; display: inline-flex; align-items: center; gap: 7px; margin-top: 4px; color: #5bc58b; font-size: .78rem; }
+.cuota-card-amount { color: var(--aldra-primary-soft); font-family: "Playfair Display", serif; font-size: 1.05rem; white-space: nowrap; }
+.cuota-card-balance { display: flex; flex-wrap: wrap; gap: 2px 10px; color: var(--aldra-text-muted); font-size: .68rem; line-height: 1.4; }
+.cuota-card-action { display: flex; align-items: center; justify-content: flex-end; gap: 9px; }
+.cuota-card-action .status-badge { flex: 0 0 auto; }
+.cuota-card .btn { display: inline-flex; min-height: 36px; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 10px; font-size: .72rem; }
+.cuota-card-complete { display: inline-flex; align-items: center; gap: 6px; color: #5bc58b; font-size: .74rem; white-space: nowrap; }
 .cuotas-pagination { justify-content: flex-end; margin-top: 20px; }
 .attendance-cancel-fields {
     display: grid;

@@ -12,6 +12,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import CreateView, FormView, ListView, UpdateView
 
@@ -65,6 +66,7 @@ class CuotasListView(LoginRequiredMixin, ListView):
             mensualidad.cuotas_pendientes = sum(cuota.saldo_pendiente_clp > 0 for cuota in cuotas)
             mensualidad.saldo_cuotas_clp = sum(cuota.saldo_pendiente_clp for cuota in cuotas)
         context["search_query"] = self.request.GET.get("q", "").strip()
+        context["return_to_url"] = self.request.get_full_path()
         return context
 
 
@@ -353,6 +355,34 @@ class PagoCreateView(LoginRequiredMixin, CreateView):
                 initial["cliente"] = cliente_id
         return initial
 
+    def get_cancel_url(self):
+        candidate = self.request.POST.get("return_to") or self.request.GET.get("return_to", "")
+        if (
+            candidate
+            and url_has_allowed_host_and_scheme(
+                candidate,
+                allowed_hosts={self.request.get_host()},
+                require_https=self.request.is_secure(),
+            )
+            and candidate.split("?", 1)[0] == reverse("pagos:cuotas")
+        ):
+            return candidate
+
+        cuota_id = self.request.POST.get("cuota") or self.request.GET.get("cuota", "")
+        if cuota_id.isdecimal() and Cuota.objects.filter(pk=cuota_id).exists():
+            return reverse("pagos:cuotas")
+        return reverse("pagos:list")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["cancel_url"] = self.get_cancel_url()
+        context["cancel_label"] = (
+            "Volver a cuotas"
+            if context["cancel_url"].split("?", 1)[0] == reverse("pagos:cuotas")
+            else "Volver a pagos"
+        )
+        return context
+
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, f"Se registró el movimiento por ${self.object.monto_clp:,} CLP.")
@@ -368,6 +398,12 @@ class PagoUpdateView(LoginRequiredMixin, UpdateView):
     template_name = "pagos/form.html"
     context_object_name = "pago"
     extra_context = {"page_title": "Editar pago", "form_title": "Editar movimiento"}
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["cancel_url"] = reverse("pagos:list")
+        context["cancel_label"] = "Volver a pagos"
+        return context
 
     def form_valid(self, form):
         response = super().form_valid(form)
