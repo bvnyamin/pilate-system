@@ -1,9 +1,10 @@
 import csv
 import io
+import json
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from .fichas_medicas import buscar_coincidencia, leer_csv, normalizar_telefono
@@ -64,6 +65,7 @@ class FichaMedicaImportTests(TestCase):
         self.assertEqual(ficha.criterio_asociacion, "Correo y teléfono")
         lote.refresh_from_db()
         self.assertEqual(lote.filas_pendientes, [])
+
 
     def test_csv_can_queue_new_client_account_for_administrator_review(self):
         lote, _ = self.preview(email="nueva@example.test", telefono="+56 9 7654 3210")
@@ -206,3 +208,67 @@ class FichaMedicaImportTests(TestCase):
         lote, _ = self.preview()
         self.assertEqual(self.confirm(lote, cliente_2="999999").status_code, 200)
         self.assertEqual(FichaMedica.objects.count(), 0)
+
+
+@override_settings(
+    GOOGLE_FORMS_WEBHOOK_SECRET="test-webhook-secret",
+    GOOGLE_LOGIN_ALLOWED_EMAILS=["admin@example.test"],
+)
+class GoogleFormsWebhookTests(TestCase):
+    def setUp(self):
+        self.admin = get_user_model().objects.create_user(
+            username="forms-admin", email="admin@example.test", is_staff=True, is_active=True,
+        )
+        self.payload = {
+            "headers": [
+                "Marca temporal", "Nombre completo", "Correo electronico",
+                "Telefono de contacto", "Antecedentes",
+            ],
+            "values": [
+                "2026-10-22T10:35:00.000Z", "Clienta Ficticia",
+                "nueva@example.test", "+56912345678", "ANTECEDENTE FICTICIO QA",
+            ],
+        }
+
+    def submit(self, payload=None, secret="test-webhook-secret"):
+        return self.client.post(
+            reverse("google_forms_medical_webhook"),
+            data=json.dumps(payload or self.payload),
+            content_type="application/json",
+            HTTP_X_ALEDRA_FORMS_SECRET=secret,
+        )
+
+    def test_form_submission_creates_pending_request_for_admin_without_account(self):
+        user_count = get_user_model().objects.count()
+        response = self.submit()
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()["estado"], "pendiente")
+        request = SolicitudAltaCliente.objects.get()
+        self.assertEqual(request.estado, SolicitudAltaCliente.Estado.PENDIENTE)
+        self.assertEqual(request.creada_por, self.admin)
+        self.assertEqual(request.email_reportado, "nueva@example.test")
+        self.assertEqual(request.respuestas[-1]["respuesta"], "ANTECEDENTE FICTICIO QA")
+        self.assertEqual(Cliente.objects.count(), 0)
+        self.assertEqual(get_user_model().objects.count(), user_count)
+
+    def test_repeated_form_submission_is_idempotent(self):
+        first = self.submit()
+        repeated = self.submit()
+        self.assertEqual(first.status_code, 201)
+        self.assertEqual(repeated.status_code, 200)
+        self.assertEqual(repeated.json()["estado"], "duplicada")
+        self.assertEqual(SolicitudAltaCliente.objects.count(), 1)
+        self.assertEqual(ImportacionFichaMedica.objects.count(), 1)
+
+    def test_wrong_secret_is_rejected_without_storing_medical_data(self):
+        response = self.submit(secret="wrong-secret")
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(SolicitudAltaCliente.objects.count(), 0)
+        self.assertEqual(ImportacionFichaMedica.objects.count(), 0)
+
+    def test_form_submission_requires_email_and_expected_columns(self):
+        values = list(self.payload["values"])
+        values[2] = ""
+        response = self.submit({**self.payload, "values": values})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(SolicitudAltaCliente.objects.count(), 0)
