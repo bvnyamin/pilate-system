@@ -9,7 +9,7 @@ from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from clientes.models import Cliente
+from clientes.models import Cliente, ImportacionFichaMedica, SolicitudAltaCliente
 from mensualidades.models import ClientePlan
 from pagos.models import Pago
 from planes.models import Plan
@@ -76,6 +76,27 @@ class NotificacionesMorosidadTests(TestCase):
         denied = self.client.get(reverse("notificaciones:index"))
         self.assertEqual(denied.status_code, 403)
         self.assertEqual(resumen_notificaciones(client_user, date(2026, 10, 7))["notification_count"], 0)
+
+    def test_solicitud_de_ficha_medica_aparece_en_campana_sin_detalles_de_salud(self):
+        importacion = ImportacionFichaMedica.objects.create(
+            archivo="Google Forms automático", creada_por=self.admin,
+        )
+        solicitud = SolicitudAltaCliente.objects.create(
+            importacion=importacion,
+            huella="a" * 64,
+            nombre_reportado="Clienta de prueba",
+            email_reportado="prueba@example.test",
+            respondida_en="2026-10-22T12:00:00Z",
+            respuestas=[{"pregunta": "Antecedentes", "respuesta": "DATO MÉDICO CONFIDENCIAL QA"}],
+            creada_por=self.admin,
+        )
+        self.client.force_login(self.admin)
+        response = self.client.get(reverse("notificaciones:index"))
+        self.assertEqual(response.context["notification_count"], 2)
+        self.assertEqual(len(response.context["notification_request_items"]), 1)
+        self.assertContains(response, "Nueva solicitud de ficha médica")
+        self.assertContains(response, reverse("clientes:medical_request_review", args=[solicitud.pk]))
+        self.assertNotContains(response, "DATO MÉDICO CONFIDENCIAL QA")
 
     @override_settings(
         EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",

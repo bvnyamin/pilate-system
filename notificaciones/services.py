@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from mensualidades.models import ClientePlan
 from pagos.models import Pago
+from clientes.models import SolicitudAltaCliente
 
 from .models import AvisoMorosidadEnviado
 
@@ -43,13 +44,22 @@ def resumen_notificaciones(user, hoy=None):
         return {
             "notification_count": 0,
             "notification_items": [],
+            "notification_request_items": [],
             "notification_period": hoy,
             "notification_is_active": hoy.day >= 7,
         }
     items = list(mensualidades_morosas(hoy))
+    requests = list(
+        SolicitudAltaCliente.objects.filter(estado=SolicitudAltaCliente.Estado.PENDIENTE)
+        .order_by("-creada_en")[:10]
+    )
+    request_count = SolicitudAltaCliente.objects.filter(
+        estado=SolicitudAltaCliente.Estado.PENDIENTE,
+    ).count()
     return {
-        "notification_count": len(items),
+        "notification_count": len(items) + request_count,
         "notification_items": items,
+        "notification_request_items": requests,
         "notification_period": hoy,
         "notification_is_active": hoy.day >= 7,
     }
