@@ -205,6 +205,7 @@ EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", default=True)
 EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", default=False)
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Aledra Pilates <no-reply@localhost>")
 NOTIFICATION_ADMIN_EMAILS = env_list("NOTIFICATION_ADMIN_EMAILS")
+SITE_URL = os.getenv("SITE_URL", "https://pilate-system.onrender.com").strip()
 GOOGLE_APPS_SCRIPT_EMAIL_URL = os.getenv("GOOGLE_APPS_SCRIPT_EMAIL_URL", "").strip()
 GOOGLE_APPS_SCRIPT_EMAIL_SECRET = os.getenv("GOOGLE_APPS_SCRIPT_EMAIL_SECRET", "").strip()
 

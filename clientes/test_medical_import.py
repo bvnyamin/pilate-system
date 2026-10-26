@@ -271,7 +271,11 @@ class GoogleFormsWebhookTests(TestCase):
             reverse("clientes:medical_request_review", args=[response.json()["solicitud"]]),
             message.body,
         )
+        self.assertEqual(message.alternatives[0][1], "text/html")
+        self.assertIn("Revisar solicitud", message.alternatives[0][0])
+        self.assertIn("Por privacidad", message.alternatives[0][0])
         self.assertNotIn("ANTECEDENTE FICTICIO QA", message.body)
+        self.assertNotIn("ANTECEDENTE FICTICIO QA", message.alternatives[0][0])
 
     def test_repeated_form_submission_is_idempotent(self):
         first = self.submit()

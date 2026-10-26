@@ -1,7 +1,6 @@
 import logging
 
 from django.conf import settings
-from django.core.mail import send_mail
 from django.db.models import F, IntegerField, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.utils import timezone
@@ -11,6 +10,7 @@ from pagos.models import Pago
 from clientes.models import SolicitudAltaCliente
 
 from .models import AvisoMorosidadEnviado
+from .email_templates import enviar_correo_administracion
 
 logger = logging.getLogger(__name__)
 
@@ -44,12 +44,20 @@ def enviar_aviso_solicitud_alta(solicitud, url_revision):
         f"{url_revision}"
     )
     try:
-        cantidad = send_mail(
+        cantidad = enviar_correo_administracion(
             subject="Aledra Pilates: nueva solicitud de perfil",
-            message=mensaje,
-            from_email=settings.DEFAULT_FROM_EMAIL,
+            text_body=mensaje,
             recipient_list=recipients,
-            fail_silently=False,
+            notification_type="Nueva solicitud",
+            heading="Hay un perfil por revisar",
+            intro="Llegó una nueva solicitud para crear un perfil de clienta y asociar su ficha médica.",
+            details=[{"label": "Nombre informado", "value": solicitud.nombre_reportado}],
+            action_label="Revisar solicitud",
+            action_url=url_revision,
+            footer_note=(
+                "Por privacidad, este correo no incluye antecedentes de salud. "
+                "Inicia sesión para revisar la ficha de forma segura."
+            ),
         )
     except Exception:
         logger.exception("No se pudo enviar el aviso de nueva solicitud de perfil.")
@@ -148,12 +156,26 @@ def enviar_aviso_morosidad(hoy=None):
             f"Saldo pendiente: ${mensualidad.saldo_aviso:,}".replace(",", ".")
         )
     lineas.extend(["", "Abre el panel administrativo para revisar cada mensualidad."])
-    cantidad = send_mail(
+    filas_correo = [
+        {
+            "client": str(mensualidad.cliente),
+            "plan": str(mensualidad.plan),
+            "period": periodo,
+            "balance": "${:,}".format(mensualidad.saldo_aviso).replace(",", "."),
+        }
+        for mensualidad in mensualidades
+    ]
+    cantidad = enviar_correo_administracion(
         subject=f"Aledra Pilates: mensualidades pendientes {periodo}",
-        message="\n".join(lineas),
-        from_email=settings.DEFAULT_FROM_EMAIL,
+        text_body="\n".join(lineas),
         recipient_list=recipients,
-        fail_silently=False,
+        notification_type="Seguimiento de pagos",
+        heading=f"Mensualidades pendientes · {periodo}",
+        intro=f"Hay {len(mensualidades)} mensualidad(es) con saldo pendiente después del día 7.",
+        rows=filas_correo,
+        action_label="Revisar pagos pendientes",
+        action_url=f"{settings.SITE_URL.rstrip('/')}/pagos/?estado=pendiente",
+        footer_note="Los saldos consideran pagos recibidos y abonos parciales.",
     )
     backend_consola = settings.EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend"
     if cantidad and not backend_consola:

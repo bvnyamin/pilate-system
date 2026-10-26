@@ -111,6 +111,10 @@ class NotificacionesMorosidadTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, ["admin@example.test"])
         self.assertEqual(mail.outbox[0].subject, "Aledra Pilates: prueba de correo")
+        self.assertEqual(len(mail.outbox[0].alternatives), 1)
+        html = mail.outbox[0].alternatives[0][0]
+        self.assertIn("El correo de Aledra está listo", html)
+        self.assertIn("Abrir notificaciones", html)
 
     def test_boton_de_prueba_no_acepta_usuarios_no_administradores(self):
         user = get_user_model().objects.create_user(

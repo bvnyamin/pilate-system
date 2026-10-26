@@ -18,7 +18,7 @@ function doPost(e) {
     }
 
     var rawBody = e && e.postData && e.postData.contents;
-    if (!rawBody || rawBody.length > 20000) {
+    if (!rawBody || rawBody.length > 50000) {
       return aledraJson_({ ok: false, error: 'invalid_request' });
     }
 
@@ -40,13 +40,14 @@ function doPost(e) {
 
     var subject = String(payload.subject || '').trim();
     var body = String(payload.body || '');
-    if (!subject || subject.length > 250 || body.length > 15000) {
+    var htmlBody = String(payload.htmlBody || '');
+    if (!subject || subject.length > 250 || body.length > 15000 || htmlBody.length > 30000) {
       return aledraJson_({ ok: false, error: 'invalid_message' });
     }
 
-    GmailApp.sendEmail(requestedRecipients.join(','), subject, body, {
-      name: 'Aledra Pilates'
-    });
+    var emailOptions = { name: 'Aledra Pilates' };
+    if (htmlBody) emailOptions.htmlBody = htmlBody;
+    GmailApp.sendEmail(requestedRecipients.join(','), subject, body, emailOptions);
     return aledraJson_({ ok: true });
   } catch (error) {
     console.error('Aledra email relay failed: ' + error.message);

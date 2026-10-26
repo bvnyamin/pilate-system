@@ -58,6 +58,8 @@ El script existente de Google Forms conserva su activador `aledraMedicalFormSubm
 
 La pantalla **Notificaciones** incluye **Enviar correo de prueba**, una acción POST exclusiva para personal administrativo que envía un mensaje neutro únicamente a `NOTIFICATION_ADMIN_EMAILS`.
 
+Los avisos incluyen una versión HTML adaptable a móvil y una alternativa de texto para Gmail y otros clientes. Los tipos y ejemplos están en [docs/correos-notificaciones.md](docs/correos-notificaciones.md). `SITE_URL` define el dominio que se usa en el botón de pagos pendientes; por defecto apunta al servicio de Render.
+
 El acceso Google es opcional y solo se muestra cuando `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` y `GOOGLE_LOGIN_ALLOWED_EMAILS` están configurados. Solo pueden entrar cuentas administrativas (`is_staff`) ya existentes en la base de datos, con correo Google verificado que coincida con la lista permitida; no se crean perfiles al iniciar sesión. En Google Cloud registra `/accounts/google/login/callback/` como URI de redirección autorizada. El login local actual permanece disponible.
 
 En desarrollo local, la URI de redirección es `http://127.0.0.1:8000/accounts/google/login/callback/`. Usa credenciales distintas para desarrollo y producción. Para activar Resend en producción también necesitas acceso DNS al dominio remitente para publicar los registros de verificación que indique Resend.

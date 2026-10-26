@@ -49,6 +49,14 @@ class GoogleAppsScriptEmailBackend(BaseEmailBackend):
                 "to": recipients,
                 "subject": message.subject or "",
                 "body": message.body or "",
+                "htmlBody": next(
+                    (
+                        content
+                        for content, mimetype in (message.alternatives or [])
+                        if mimetype == "text/html"
+                    ),
+                    "",
+                ),
             }
             request = Request(
                 endpoint,
