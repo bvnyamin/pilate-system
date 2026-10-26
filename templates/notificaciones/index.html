@@ -1,13 +1,17 @@
 {% extends "base.html" %}
 {% load static planes_formatters %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/notificaciones.css' %}?v=1">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/notificaciones.css' %}?v=2">{% endblock %}
 {% block title %}Notificaciones{% endblock %}
 {% block content %}
 <section class="page-intro-row notification-page-heading">
     <div><span class="section-eyebrow">Seguimiento financiero</span><h2>Notificaciones</h2><p>Avisos de mensualidades que siguen pendientes después del día 7.</p></div>
     <form method="post" action="{% url 'notificaciones:probar_correo' %}">
         {% csrf_token %}
-        <button type="submit" class="btn btn-outline-light">Enviar correo de prueba</button>
+        <div class="notification-email-actions">
+            <button type="submit" name="tipo" value="prueba" class="btn btn-outline-light">Enviar correo de prueba</button>
+            <button type="submit" name="tipo" value="solicitud" class="btn btn-outline-light">Ejemplo: nueva solicitud</button>
+            <button type="submit" name="tipo" value="morosidad" class="btn btn-outline-light">Ejemplo: aviso de pago</button>
+        </div>
     </form>
 </section>
 <section class="content-card notification-card" aria-labelledby="notification-list-title">

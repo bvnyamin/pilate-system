@@ -116,6 +116,42 @@ class NotificacionesMorosidadTests(TestCase):
         self.assertIn("El correo de Aledra está listo", html)
         self.assertIn("Abrir notificaciones", html)
 
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        DEFAULT_FROM_EMAIL="Aledra Pilates <avisos@example.test>",
+        NOTIFICATION_ADMIN_EMAILS=["admin@example.test"],
+    )
+    def test_ejemplo_de_solicitud_usa_nombre_ficticio_y_no_incluye_datos_medicos(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(reverse("notificaciones:probar_correo"), {"tipo": "solicitud"})
+
+        self.assertRedirects(response, reverse("notificaciones:index"))
+        message = mail.outbox[0]
+        self.assertIn("EJEMPLO", message.subject)
+        self.assertIn("Camila Ejemplo", message.body)
+        self.assertIn("Camila Ejemplo", message.alternatives[0][0])
+        self.assertIn("ficticios", message.alternatives[0][0])
+        self.assertNotIn("hipertensión", message.alternatives[0][0].lower())
+        self.assertEqual(message.to, ["admin@example.test"])
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        DEFAULT_FROM_EMAIL="Aledra Pilates <avisos@example.test>",
+        NOTIFICATION_ADMIN_EMAILS=["admin@example.test"],
+    )
+    def test_ejemplo_de_morosidad_identifica_saldos_ficticios(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(reverse("notificaciones:probar_correo"), {"tipo": "morosidad"})
+
+        self.assertRedirects(response, reverse("notificaciones:index"))
+        message = mail.outbox[0]
+        html = message.alternatives[0][0]
+        self.assertIn("EJEMPLO", message.subject)
+        self.assertIn("Camila Ejemplo", html)
+        self.assertIn("$69.000", html)
+        self.assertIn("no corresponde a una deuda real", html)
+        self.assertEqual(message.to, ["admin@example.test"])
+
     def test_boton_de_prueba_no_acepta_usuarios_no_administradores(self):
         user = get_user_model().objects.create_user(
             username="prueba-correo-no-admin", password="test-password-only"

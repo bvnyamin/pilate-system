@@ -14,6 +14,9 @@ Script envía ambas versiones con Gmail.
 Revisar solicitud.” El correo no incluye respuestas ni antecedentes médicos;
 la administradora inicia sesión para revisar la ficha en el sistema.
 
+En **Notificaciones**, el botón **Ejemplo: nueva solicitud** manda una muestra
+con este formato y un nombre ficticio.
+
 ### Mensualidad pendiente
 
 **Asunto:** Aledra Pilates: mensualidades pendientes 10/2026
@@ -21,6 +24,9 @@ la administradora inicia sesión para revisar la ficha en el sistema.
 **Ejemplo:** “Hay 2 mensualidades con saldo pendiente después del día 7”,
 seguido por clienta, plan, período y saldo. Incluye un botón para revisar los
 pagos pendientes.
+
+El botón **Ejemplo: aviso de pago** manda dos filas de muestra. El asunto y el
+pie indican que es un ejemplo y que los saldos no son reales.
 
 ### Prueba de correo
 
