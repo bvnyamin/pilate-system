@@ -9,7 +9,7 @@ from mensualidades.models import ClientePlan
 from pagos.models import Pago
 from clientes.models import SolicitudAltaCliente
 
-from .models import AvisoMorosidadEnviado
+from .models import AvisoMorosidadEnviado, NotificacionLeida
 from .email_templates import enviar_correo_administracion
 
 logger = logging.getLogger(__name__)
@@ -107,21 +107,42 @@ def resumen_notificaciones(user, hoy=None):
             "notification_request_items": [],
             "notification_period": hoy,
             "notification_is_active": hoy.day >= 7,
+            "notification_has_items": False,
         }
     items = list(mensualidades_morosas(hoy))
-    requests = list(
-        SolicitudAltaCliente.objects.filter(estado=SolicitudAltaCliente.Estado.PENDIENTE)
-        .order_by("-creada_en")[:10]
-    )
-    request_count = SolicitudAltaCliente.objects.filter(
+    pending_requests = SolicitudAltaCliente.objects.filter(
         estado=SolicitudAltaCliente.Estado.PENDIENTE,
-    ).count()
+    ).order_by("-creada_en")
+    pending_request_ids = list(pending_requests.values_list("pk", flat=True))
+    requests = list(pending_requests[:10])
+    request_keys = {f"solicitud:{request_id}" for request_id in pending_request_ids}
+    monthly_keys = {
+        f"mensualidad:{item.pk}:{item.periodo_anio}-{item.periodo_mes:02d}"
+        for item in items
+    }
+    active_keys = request_keys | monthly_keys
+    read_keys = set(
+        NotificacionLeida.objects.filter(
+            usuario=user,
+            clave__in=active_keys,
+        ).values_list("clave", flat=True)
+    ) if active_keys else set()
+
+    for item in items:
+        item.notification_key = f"mensualidad:{item.pk}:{item.periodo_anio}-{item.periodo_mes:02d}"
+        item.notification_is_read = item.notification_key in read_keys
+    for solicitud in requests:
+        solicitud.notification_key = f"solicitud:{solicitud.pk}"
+        solicitud.notification_is_read = solicitud.notification_key in read_keys
+
+    unread_count = len(active_keys - read_keys)
     return {
-        "notification_count": len(items) + request_count,
+        "notification_count": unread_count,
         "notification_items": items,
         "notification_request_items": requests,
         "notification_period": hoy,
         "notification_is_active": hoy.day >= 7,
+        "notification_has_items": bool(items or pending_request_ids),
     }
 
 

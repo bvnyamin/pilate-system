@@ -5,10 +5,15 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView
 
+from clientes.models import SolicitudAltaCliente
+from mensualidades.models import ClientePlan
+
+from .models import NotificacionLeida
 from .services import correos_administracion, mensualidades_morosas
 from .email_templates import enviar_correo_administracion
 
@@ -35,6 +40,36 @@ class NotificacionesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
             }
         )
         return context
+
+
+class MarcarNotificacionLeidaView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Mark a current staff notification as read, then open its related record."""
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def post(self, request, *args, **kwargs):
+        tipo = request.POST.get("tipo")
+        if tipo == "solicitud":
+            solicitud = get_object_or_404(
+                SolicitudAltaCliente,
+                pk=request.POST.get("id"),
+                estado=SolicitudAltaCliente.Estado.PENDIENTE,
+            )
+            clave = f"solicitud:{solicitud.pk}"
+            destino = reverse("clientes:medical_request_review", args=[solicitud.pk])
+        elif tipo == "mensualidad":
+            plan = get_object_or_404(
+                mensualidades_morosas(),
+                pk=request.POST.get("id"),
+            )
+            clave = f"mensualidad:{plan.pk}:{plan.periodo_anio}-{plan.periodo_mes:02d}"
+            destino = reverse("clientes:detail", args=[plan.cliente_id])
+        else:
+            return redirect("notificaciones:index")
+
+        NotificacionLeida.objects.get_or_create(usuario=request.user, clave=clave)
+        return redirect(destino)
 
 
 class ProbarCorreoView(LoginRequiredMixin, UserPassesTestMixin, View):

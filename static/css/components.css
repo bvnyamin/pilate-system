@@ -40,13 +40,20 @@
 .notification-panel-heading .section-eyebrow { font-size: .62rem; }
 .notification-panel-close { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; border: 1px solid var(--aldra-border-soft); border-radius: 9px; background: transparent; color: var(--aldra-text-muted); }
 .notification-panel-list { display: grid; overflow: auto; overscroll-behavior: contain; }
-.notification-panel-item { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 17px; border-bottom: 1px solid var(--aldra-border-soft); color: inherit; text-decoration: none; transition: background-color 140ms ease; }
+.notification-panel-form { margin: 0; }
+.notification-panel-item { display: flex; width: 100%; min-width: 0; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 17px; border: 0; border-bottom: 1px solid var(--aldra-border-soft); background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: background-color 140ms ease, opacity 140ms ease; }
 .notification-panel-item:last-child { border-bottom: 0; }
 .notification-panel-item:hover, .notification-panel-item:focus-visible { background: rgba(255, 255, 255, .045); }
+.notification-panel-item.is-read { background: rgba(255, 255, 255, .018); }
+.notification-panel-item.is-read .notification-panel-item-main strong { color: var(--aldra-text-muted); font-weight: 500; }
+.notification-panel-item-meta { display: grid; flex: 0 0 auto; justify-items: end; gap: 4px; }
 .notification-panel-item-main { display: grid; min-width: 0; gap: 4px; }
 .notification-panel-item-main strong { overflow: hidden; color: var(--aldra-text); font-size: .82rem; text-overflow: ellipsis; white-space: nowrap; }
 .notification-panel-item-main > span { overflow: hidden; color: var(--aldra-text-muted); font-size: .72rem; text-overflow: ellipsis; white-space: nowrap; }
 .notification-panel-balance { flex: 0 0 auto; color: var(--aldra-primary-soft); font-size: .8rem; font-weight: 600; white-space: nowrap; }
+.notification-panel-status { color: var(--aldra-primary-soft); font-size: .67rem; font-weight: 600; white-space: nowrap; }
+.notification-panel-status.is-read { color: #61d6b2; }
+.notification-panel-read-note { display: flex; align-items: center; gap: 7px; padding: 11px 17px; border-top: 1px solid var(--aldra-border-soft); color: var(--aldra-text-muted); font-size: .72rem; }
 .notification-panel-empty { display: grid; justify-items: center; gap: 9px; padding: 30px 22px; color: var(--aldra-text-muted); text-align: center; }
 .notification-panel-empty i { color: var(--aldra-primary-soft); font-size: 1.5rem; }
 .notification-panel-empty p { max-width: 290px; margin: 0; font-size: .8rem; line-height: 1.55; }

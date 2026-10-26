@@ -9,7 +9,7 @@
     </div>
     <div class="header-actions">
         {% if request.user.is_staff %}<div class="notification-menu" data-notification-menu>
-            <button class="header-icon notification-bell" type="button" data-notification-trigger aria-expanded="false" aria-controls="notification-panel" aria-haspopup="dialog" aria-label="Notificaciones{% if notification_count %}, {{ notification_count }} aviso{% if notification_count != 1 %}s{% endif %} pendiente{% if notification_count != 1 %}s{% endif %}{% endif %}">
+            <button class="header-icon notification-bell" type="button" data-notification-trigger aria-expanded="false" aria-controls="notification-panel" aria-haspopup="dialog" aria-label="Notificaciones{% if notification_count %}, {{ notification_count }} aviso{% if notification_count != 1 %}s{% endif %} sin revisar{% endif %}">
                 <i class="bi bi-bell" aria-hidden="true"></i>
                 {% if notification_count %}<span class="notification-count" aria-hidden="true">{{ notification_count }}</span>{% endif %}
             </button>
@@ -19,17 +19,24 @@
                     <span class="notification-total">{{ notification_count }}</span>
                     <button class="notification-panel-close" type="button" data-notification-close aria-label="Cerrar notificaciones"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
                 </div>
-                {% if notification_count %}
+                {% if notification_has_items %}
                     <div class="notification-panel-list">
-                        {% for solicitud in notification_request_items %}<a class="notification-panel-item" href="{% url 'clientes:medical_request_review' solicitud.pk %}">
-                            <span class="notification-panel-item-main"><strong>Nueva solicitud de ficha médica</strong><span>Pendiente de revisión · {{ solicitud.creada_en|date:"d/m/Y H:i" }}</span></span>
-                            <span class="notification-panel-balance">Revisar</span>
-                        </a>{% endfor %}
-                        {% for mensualidad in notification_items %}<a class="notification-panel-item" href="{% url 'clientes:detail' mensualidad.cliente.pk %}">
-                            <span class="notification-panel-item-main"><strong>{{ mensualidad.cliente }}</strong><span>{{ mensualidad.plan }} · {{ mensualidad.periodo_mes }}/{{ mensualidad.periodo_anio }}</span></span>
-                            <span class="notification-panel-balance">{{ mensualidad.saldo_aviso|clp }}</span>
-                        </a>{% endfor %}
+                        {% for solicitud in notification_request_items %}<form method="post" action="{% url 'notificaciones:marcar_leida' %}" class="notification-panel-form">
+                            {% csrf_token %}<input type="hidden" name="tipo" value="solicitud"><input type="hidden" name="id" value="{{ solicitud.pk }}">
+                            <button type="submit" class="notification-panel-item{% if solicitud.notification_is_read %} is-read{% endif %}">
+                                <span class="notification-panel-item-main"><strong>Nueva solicitud de ficha médica</strong><span>Pendiente de revisión · {{ solicitud.creada_en|date:"d/m/Y H:i" }}</span></span>
+                                {% if solicitud.notification_is_read %}<span class="notification-panel-status is-read"><i class="bi bi-check2" aria-hidden="true"></i> Revisada</span>{% else %}<span class="notification-panel-status">Revisar</span>{% endif %}
+                            </button>
+                        </form>{% endfor %}
+                        {% for mensualidad in notification_items %}<form method="post" action="{% url 'notificaciones:marcar_leida' %}" class="notification-panel-form">
+                            {% csrf_token %}<input type="hidden" name="tipo" value="mensualidad"><input type="hidden" name="id" value="{{ mensualidad.pk }}">
+                            <button type="submit" class="notification-panel-item{% if mensualidad.notification_is_read %} is-read{% endif %}">
+                                <span class="notification-panel-item-main"><strong>{{ mensualidad.cliente }}</strong><span>{{ mensualidad.plan }} · {{ mensualidad.periodo_mes }}/{{ mensualidad.periodo_anio }}</span></span>
+                                <span class="notification-panel-item-meta"><span class="notification-panel-balance">{{ mensualidad.saldo_aviso|clp }}</span>{% if mensualidad.notification_is_read %}<span class="notification-panel-status is-read"><i class="bi bi-check2" aria-hidden="true"></i> Revisada</span>{% else %}<span class="notification-panel-status">Pendiente</span>{% endif %}</span>
+                            </button>
+                        </form>{% endfor %}
                     </div>
+                    {% if not notification_count %}<div class="notification-panel-read-note"><i class="bi bi-check2-circle" aria-hidden="true"></i> Ya revisaste todas estas notificaciones.</div>{% endif %}
                 {% elif not notification_is_active %}
                     <div class="notification-panel-empty"><i class="bi bi-calendar-check" aria-hidden="true"></i><p>Aún dentro del plazo de pago. Los avisos se activan desde el día 7.</p></div>
                 {% else %}

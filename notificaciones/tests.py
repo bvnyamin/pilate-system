@@ -14,7 +14,7 @@ from mensualidades.models import ClientePlan
 from pagos.models import Pago
 from planes.models import Plan
 
-from .models import AvisoMorosidadEnviado
+from .models import AvisoMorosidadEnviado, NotificacionLeida
 from .services import enviar_aviso_morosidad, mensualidades_morosas, resumen_notificaciones
 
 
@@ -95,8 +95,84 @@ class NotificacionesMorosidadTests(TestCase):
         self.assertEqual(response.context["notification_count"], 2)
         self.assertEqual(len(response.context["notification_request_items"]), 1)
         self.assertContains(response, "Nueva solicitud de ficha médica")
-        self.assertContains(response, reverse("clientes:medical_request_review", args=[solicitud.pk]))
+        self.assertContains(response, reverse("notificaciones:marcar_leida"))
+        self.assertContains(response, f'value="{solicitud.pk}"')
         self.assertNotContains(response, "DATO MÉDICO CONFIDENCIAL QA")
+
+    def test_al_abrir_un_aviso_de_morosidad_se_marca_leido_y_baja_el_contador(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(
+            reverse("notificaciones:marcar_leida"),
+            {"tipo": "mensualidad", "id": self.mensualidad.pk},
+        )
+
+        self.assertRedirects(response, reverse("clientes:detail", args=[self.cliente.pk]))
+        leida = NotificacionLeida.objects.get(usuario=self.admin)
+        self.assertEqual(leida.clave, f"mensualidad:{self.mensualidad.pk}:2026-10")
+        resumen = resumen_notificaciones(self.admin, date(2026, 10, 26))
+        self.assertEqual(resumen["notification_count"], 0)
+        self.assertTrue(resumen["notification_has_items"])
+        self.assertTrue(resumen["notification_items"][0].notification_is_read)
+
+        response = self.client.get(reverse("notificaciones:index"))
+        self.assertContains(response, "Revisada")
+        self.assertContains(response, "Ya revisaste todas estas notificaciones")
+
+    def test_al_abrir_solicitud_se_marca_leida_solo_para_esa_administradora(self):
+        importacion = ImportacionFichaMedica.objects.create(
+            archivo="Google Forms automático", creada_por=self.admin,
+        )
+        solicitud = SolicitudAltaCliente.objects.create(
+            importacion=importacion,
+            huella="b" * 64,
+            nombre_reportado="Clienta solicitud pendiente",
+            email_reportado="solicitud@example.test",
+            respondida_en="2026-10-22T12:00:00Z",
+            respuestas=[],
+            creada_por=self.admin,
+        )
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("notificaciones:marcar_leida"),
+            {"tipo": "solicitud", "id": solicitud.pk},
+        )
+
+        self.assertRedirects(response, reverse("clientes:medical_request_review", args=[solicitud.pk]))
+        resumen_admin = resumen_notificaciones(self.admin, date(2026, 10, 26))
+        self.assertTrue(resumen_admin["notification_request_items"][0].notification_is_read)
+
+        otra_admin = get_user_model().objects.create_user(
+            username="segunda-admin-avisos", password="test-password-only", is_staff=True,
+        )
+        resumen_otra_admin = resumen_notificaciones(otra_admin, date(2026, 10, 26))
+        self.assertFalse(resumen_otra_admin["notification_request_items"][0].notification_is_read)
+        self.assertEqual(resumen_otra_admin["notification_count"], 2)
+
+    def test_no_se_puede_marcar_un_aviso_por_get_ni_una_mensualidad_ya_pagada(self):
+        self.client.force_login(self.admin)
+        response = self.client.get(
+            reverse("notificaciones:marcar_leida"),
+            {"tipo": "mensualidad", "id": self.mensualidad.pk},
+        )
+        self.assertEqual(response.status_code, 405)
+        self.assertFalse(NotificacionLeida.objects.exists())
+
+        Pago.objects.create(
+            tipo_pago=Pago.TipoPago.MENSUALIDAD,
+            cliente_plan=self.mensualidad,
+            concepto="Pago completo",
+            monto_clp=self.mensualidad.precio_final_clp,
+            metodo_pago=Pago.MetodoPago.TRANSFERENCIA,
+            fecha_pago=date(2026, 10, 26),
+            estado_pago=Pago.EstadoPago.PAGADO,
+        )
+        response = self.client.post(
+            reverse("notificaciones:marcar_leida"),
+            {"tipo": "mensualidad", "id": self.mensualidad.pk},
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(NotificacionLeida.objects.exists())
 
     @override_settings(
         EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
