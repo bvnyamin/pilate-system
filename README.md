@@ -56,6 +56,8 @@ En Render Free, el correo se envía mediante un puente HTTPS a Google Apps Scrip
 
 El script existente de Google Forms conserva su activador `aledraMedicalFormSubmitted`; el puente de correo agrega `doPost(e)` al mismo proyecto y no reemplaza ese activador.
 
+La pantalla **Notificaciones** incluye **Enviar correo de prueba**, una acción POST exclusiva para personal administrativo que envía un mensaje neutro únicamente a `NOTIFICATION_ADMIN_EMAILS`.
+
 El acceso Google es opcional y solo se muestra cuando `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` y `GOOGLE_LOGIN_ALLOWED_EMAILS` están configurados. Solo pueden entrar cuentas administrativas (`is_staff`) ya existentes en la base de datos, con correo Google verificado que coincida con la lista permitida; no se crean perfiles al iniciar sesión. En Google Cloud registra `/accounts/google/login/callback/` como URI de redirección autorizada. El login local actual permanece disponible.
 
 En desarrollo local, la URI de redirección es `http://127.0.0.1:8000/accounts/google/login/callback/`. Usa credenciales distintas para desarrollo y producción. Para activar Resend en producción también necesitas acceso DNS al dominio remitente para publicar los registros de verificación que indique Resend.

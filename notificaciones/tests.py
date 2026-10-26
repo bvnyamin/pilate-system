@@ -101,6 +101,30 @@ class NotificacionesMorosidadTests(TestCase):
     @override_settings(
         EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
         DEFAULT_FROM_EMAIL="Aledra Pilates <avisos@example.test>",
+        NOTIFICATION_ADMIN_EMAILS=["admin@example.test"],
+    )
+    def test_boton_de_prueba_envia_correo_solo_a_administracion(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(reverse("notificaciones:probar_correo"))
+
+        self.assertRedirects(response, reverse("notificaciones:index"))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["admin@example.test"])
+        self.assertEqual(mail.outbox[0].subject, "Aledra Pilates: prueba de correo")
+
+    def test_boton_de_prueba_no_acepta_usuarios_no_administradores(self):
+        user = get_user_model().objects.create_user(
+            username="prueba-correo-no-admin", password="test-password-only"
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(reverse("notificaciones:probar_correo"))
+
+        self.assertEqual(response.status_code, 403)
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        DEFAULT_FROM_EMAIL="Aledra Pilates <avisos@example.test>",
         NOTIFICATION_ADMIN_EMAILS=[],
     )
     @patch("notificaciones.services.timezone.localdate", return_value=date(2026, 10, 7))

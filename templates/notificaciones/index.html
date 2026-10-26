@@ -5,6 +5,10 @@
 {% block content %}
 <section class="page-intro-row notification-page-heading">
     <div><span class="section-eyebrow">Seguimiento financiero</span><h2>Notificaciones</h2><p>Avisos de mensualidades que siguen pendientes después del día 7.</p></div>
+    <form method="post" action="{% url 'notificaciones:probar_correo' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-light">Enviar correo de prueba</button>
+    </form>
 </section>
 <section class="content-card notification-card" aria-labelledby="notification-list-title">
     <div class="notification-card-heading"><div><span class="section-eyebrow">{{ fecha_hoy|date:"F Y" }}</span><h3 id="notification-list-title">Mensualidades pendientes</h3></div><span class="notification-total">{{ avisos_activos }}</span></div>
