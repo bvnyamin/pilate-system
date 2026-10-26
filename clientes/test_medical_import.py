@@ -3,6 +3,7 @@ import io
 import json
 
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -250,6 +251,27 @@ class GoogleFormsWebhookTests(TestCase):
         self.assertEqual(request.respuestas[-1]["respuesta"], "ANTECEDENTE FICTICIO QA")
         self.assertEqual(Cliente.objects.count(), 0)
         self.assertEqual(get_user_model().objects.count(), user_count)
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        DEFAULT_FROM_EMAIL="Aledra Pilates <avisos@example.test>",
+        NOTIFICATION_ADMIN_EMAILS=["admin@example.test"],
+    )
+    def test_new_request_sends_admin_email_without_medical_details(self):
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.submit()
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        self.assertEqual(message.to, ["admin@example.test"])
+        self.assertIn("nueva solicitud de perfil", message.subject)
+        self.assertIn("Clienta Ficticia", message.body)
+        self.assertIn(
+            reverse("clientes:medical_request_review", args=[response.json()["solicitud"]]),
+            message.body,
+        )
+        self.assertNotIn("ANTECEDENTE FICTICIO QA", message.body)
 
     def test_repeated_form_submission_is_idempotent(self):
         first = self.submit()

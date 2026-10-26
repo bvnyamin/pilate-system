@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db.models import F, IntegerField, Q, Sum, Value
@@ -9,6 +11,56 @@ from pagos.models import Pago
 from clientes.models import SolicitudAltaCliente
 
 from .models import AvisoMorosidadEnviado
+
+logger = logging.getLogger(__name__)
+
+
+def correos_administracion():
+    recipients = list(settings.NOTIFICATION_ADMIN_EMAILS)
+    if recipients:
+        return recipients
+
+    from usuarios.models import Usuario
+
+    return list(
+        Usuario.objects.filter(is_staff=True, is_active=True)
+        .exclude(email="")
+        .values_list("email", flat=True)
+        .distinct()
+    )
+
+
+def enviar_aviso_solicitud_alta(solicitud, url_revision):
+    """Email staff about a new profile request without disclosing medical data."""
+    recipients = correos_administracion()
+    if not recipients:
+        return {"enviado": False, "razon": "No hay correos de administración configurados."}
+
+    mensaje = (
+        "Llegó una nueva solicitud para crear un perfil de clienta y asociar su ficha médica.\n\n"
+        f"Nombre informado: {solicitud.nombre_reportado}\n\n"
+        "Por privacidad, los antecedentes de salud no se incluyen en este correo. "
+        "Inicia sesión en Aledra para revisar la solicitud:\n"
+        f"{url_revision}"
+    )
+    try:
+        cantidad = send_mail(
+            subject="Aledra Pilates: nueva solicitud de perfil",
+            message=mensaje,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=recipients,
+            fail_silently=False,
+        )
+    except Exception:
+        logger.exception("No se pudo enviar el aviso de nueva solicitud de perfil.")
+        return {"enviado": False, "razon": "No se pudo enviar el correo."}
+
+    backend_consola = settings.EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend"
+    return {
+        "enviado": bool(cantidad and not backend_consola),
+        "registrado_en_consola": bool(cantidad and backend_consola),
+        "destinatarios": recipients,
+    }
 
 
 def mensualidades_morosas(hoy=None):
@@ -81,16 +133,7 @@ def enviar_aviso_morosidad(hoy=None):
     if ya_enviado:
         return {"enviado": False, "razon": "El aviso de este mes ya fue enviado."}
 
-    recipients = list(settings.NOTIFICATION_ADMIN_EMAILS)
-    if not recipients:
-        from usuarios.models import Usuario
-
-        recipients = list(
-            Usuario.objects.filter(is_staff=True)
-            .exclude(email="")
-            .values_list("email", flat=True)
-            .distinct()
-        )
+    recipients = correos_administracion()
     if not recipients:
         return {"enviado": False, "razon": "No hay correos de administración configurados."}
 

@@ -12,6 +12,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.validators import validate_email
 from django.db import transaction
 from django.http import JsonResponse
+from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -19,6 +20,7 @@ from django.views.decorators.http import require_POST
 from .fichas_medicas import leer_csv
 from .models import FichaMedica, ImportacionFichaMedica, SolicitudAltaCliente
 from .solicitudes import crear_solicitud_alta
+from notificaciones.services import enviar_aviso_solicitud_alta
 
 
 MAX_WEBHOOK_BYTES = 256 * 1024
@@ -105,6 +107,13 @@ def recibir_respuesta_ficha_medica(request):
             fila=row,
             solicitante=admin_user,
         )
+        if creada:
+            url_revision = request.build_absolute_uri(
+                reverse("clientes:medical_request_review", args=[solicitud.pk])
+            )
+            transaction.on_commit(
+                lambda: enviar_aviso_solicitud_alta(solicitud, url_revision)
+            )
 
     return JsonResponse(
         {"estado": "pendiente" if creada else "duplicada", "solicitud": solicitud.pk},
