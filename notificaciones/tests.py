@@ -58,7 +58,8 @@ class NotificacionesMorosidadTests(TestCase):
         mensualidad = mensualidades_morosas(date(2026, 10, 7)).get()
         self.assertEqual(mensualidad.saldo_aviso, self.mensualidad.precio_final_clp - 10000)
 
-    def test_campana_y_vista_muestran_solo_a_administracion(self):
+    @patch("notificaciones.services.timezone.localdate", return_value=date(2026, 10, 26))
+    def test_campana_y_vista_muestran_solo_a_administracion(self, _localdate):
         self.client.force_login(self.admin)
         response = self.client.get(reverse("notificaciones:index"))
         self.assertEqual(response.status_code, 200)
@@ -77,7 +78,8 @@ class NotificacionesMorosidadTests(TestCase):
         self.assertEqual(denied.status_code, 403)
         self.assertEqual(resumen_notificaciones(client_user, date(2026, 10, 7))["notification_count"], 0)
 
-    def test_solicitud_de_ficha_medica_aparece_en_campana_sin_detalles_de_salud(self):
+    @patch("notificaciones.services.timezone.localdate", return_value=date(2026, 10, 26))
+    def test_solicitud_de_ficha_medica_aparece_en_campana_sin_detalles_de_salud(self, _localdate):
         importacion = ImportacionFichaMedica.objects.create(
             archivo="Google Forms automático", creada_por=self.admin,
         )
@@ -99,7 +101,8 @@ class NotificacionesMorosidadTests(TestCase):
         self.assertContains(response, f'value="{solicitud.pk}"')
         self.assertNotContains(response, "DATO MÉDICO CONFIDENCIAL QA")
 
-    def test_al_abrir_un_aviso_de_morosidad_se_marca_leido_y_baja_el_contador(self):
+    @patch("notificaciones.services.timezone.localdate", return_value=date(2026, 10, 26))
+    def test_al_abrir_un_aviso_de_morosidad_se_marca_leido_y_baja_el_contador(self, _localdate):
         self.client.force_login(self.admin)
         response = self.client.post(
             reverse("notificaciones:marcar_leida"),

@@ -264,10 +264,12 @@ class ResolverSolicitudAltaView(LoginRequiredMixin, UserPassesTestMixin, View):
 
             form = self.form_for(solicitud, request.POST)
             if not form.is_valid():
+                messages.error(request, "La solicitud sigue pendiente. Revisa los campos indicados y vuelve a aprobarla.")
                 return self.render(request, solicitud, form)
             data = form.cleaned_data
             email = (data.get("email") or "").strip().casefold()
             client = data.get("cliente_existente")
+            perfil_existente = client is not None
             if not client:
                 if Cliente.objects.filter(rut=data["rut"]).exists():
                     form.add_error("rut", "Ese RUT ya pertenece a una clienta; selecciona el perfil existente.")
@@ -292,9 +294,12 @@ class ResolverSolicitudAltaView(LoginRequiredMixin, UserPassesTestMixin, View):
             solicitud.cliente = client
             solicitud.revisada_por = request.user
             solicitud.revisada_en = timezone.now()
-            solicitud.resolucion = "Perfil creado y ficha médica vinculada."
+            solicitud.resolucion = (
+                "Ficha médica vinculada al perfil existente."
+                if perfil_existente else "Perfil creado y ficha médica vinculada."
+            )
             solicitud.save(update_fields=["estado", "cliente", "revisada_por", "revisada_en", "resolucion"])
-        messages.success(request, f"Solicitud aprobada: se creó el perfil de {client} y se vinculó su ficha médica.")
+        messages.success(request, f"Solicitud aprobada para {client}. {solicitud.resolucion}")
         return redirect("clientes:medical_requests")
 
     @staticmethod
@@ -305,6 +310,10 @@ class ResolverSolicitudAltaView(LoginRequiredMixin, UserPassesTestMixin, View):
             "apellidos": words[-1] if len(words) > 1 else "",
             "email": solicitud.email_reportado,
             "telefono": solicitud.telefono_reportado,
+            "rut": next((
+                respuesta["respuesta"] for respuesta in solicitud.respuestas
+                if respuesta["pregunta"].strip().casefold() == "rut"
+            ), ""),
         }
         return SolicitudAltaForm(data=data, initial=initial)
 

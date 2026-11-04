@@ -286,6 +286,24 @@ class GoogleFormsWebhookTests(TestCase):
         self.assertEqual(SolicitudAltaCliente.objects.count(), 1)
         self.assertEqual(ImportacionFichaMedica.objects.count(), 1)
 
+    def test_rut_from_google_forms_is_prefilled_and_saved_on_approval(self):
+        self.payload["headers"].append("RUT")
+        self.payload["values"].append("12.345.678-5")
+        response = self.submit()
+        self.assertEqual(response.status_code, 201)
+        self.client.force_login(self.admin)
+        url = reverse("clientes:medical_request_review", args=[response.json()["solicitud"]])
+        form = self.client.get(url).context["form"]
+        self.assertEqual(form["rut"].value(), "12.345.678-5")
+        self.assertEqual(len(self.client.get(url).context["notification_request_items"]), 1)
+        result = self.client.post(url, {**form.initial, "accion": "aprobar"}, follow=True)
+        self.assertContains(result, "Solicitud aprobada")
+        self.assertFalse(result.context["notification_request_items"])
+        solicitud = SolicitudAltaCliente.objects.get()
+        self.assertEqual(solicitud.estado, SolicitudAltaCliente.Estado.APROBADA)
+        self.assertEqual(solicitud.cliente.rut, "12345678-5")
+        self.assertEqual(solicitud.cliente.fichas_medicas.count(), 1)
+
     def test_wrong_secret_is_rejected_without_storing_medical_data(self):
         response = self.submit(secret="wrong-secret")
         self.assertEqual(response.status_code, 403)
