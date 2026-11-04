@@ -304,6 +304,22 @@ class GoogleFormsWebhookTests(TestCase):
         self.assertEqual(solicitud.cliente.rut, "12345678-5")
         self.assertEqual(solicitud.cliente.fichas_medicas.count(), 1)
 
+    def test_legacy_responses_can_create_multiple_profiles_without_rut(self):
+        self.client.force_login(self.admin)
+        for email in ("primera@example.test", "segunda@example.test"):
+            values = self.payload["values"].copy()
+            values[2] = email
+            response = self.submit({**self.payload, "values": values})
+            self.assertEqual(response.status_code, 201)
+            url = reverse("clientes:medical_request_review", args=[response.json()["solicitud"]])
+            form = self.client.get(url).context["form"]
+            self.assertRedirects(
+                self.client.post(url, {**form.initial, "accion": "aprobar"}),
+                reverse("clientes:medical_requests"),
+            )
+        self.assertEqual(Cliente.objects.filter(rut__isnull=True).count(), 2)
+        self.assertEqual(FichaMedica.objects.count(), 2)
+
     def test_wrong_secret_is_rejected_without_storing_medical_data(self):
         response = self.submit(secret="wrong-secret")
         self.assertEqual(response.status_code, 403)

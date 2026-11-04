@@ -52,7 +52,7 @@ class AccesoImportacionMixin(LoginRequiredMixin, UserPassesTestMixin):
 class SolicitudAltaForm(forms.Form):
     cliente_existente = forms.ModelChoiceField(
         queryset=Cliente.objects.none(), required=False, label="Vincular a una clienta existente",
-        help_text="Si la persona ya está registrada, selecciónala; si no, completa sus datos y RUT.",
+        help_text="Si la persona ya está registrada, selecciónala. Si es nueva, puedes completar su RUT después.",
     )
     nombres = forms.CharField(required=False, max_length=120, label="Nombres")
     apellidos = forms.CharField(required=False, max_length=120, label="Apellidos")
@@ -81,7 +81,7 @@ class SolicitudAltaForm(forms.Form):
             if not data.get("motivo_vinculo", "").strip():
                 self.add_error("motivo_vinculo", "Explica por qué se vincula esta respuesta con la clienta seleccionada.")
         else:
-            for name, label in (("nombres", "los nombres"), ("apellidos", "los apellidos"), ("rut", "el RUT"), ("email", "el correo")):
+            for name, label in (("nombres", "los nombres"), ("apellidos", "los apellidos"), ("email", "el correo")):
                 if not data.get(name):
                     self.add_error(name, f"Completa {label} para crear el perfil de clienta.")
         if data.get("rut"):
@@ -271,12 +271,12 @@ class ResolverSolicitudAltaView(LoginRequiredMixin, UserPassesTestMixin, View):
             client = data.get("cliente_existente")
             perfil_existente = client is not None
             if not client:
-                if Cliente.objects.filter(rut=data["rut"]).exists():
+                if data.get("rut") and Cliente.objects.filter(rut=data["rut"]).exists():
                     form.add_error("rut", "Ese RUT ya pertenece a una clienta; selecciona el perfil existente.")
                     return self.render(request, solicitud, form)
                 client = Cliente.objects.create(
                     nombres=data["nombres"].strip(), apellidos=data["apellidos"].strip(),
-                    rut=data["rut"], email=email, telefono=data.get("telefono", "").strip(),
+                    rut=data.get("rut") or None, email=email, telefono=data.get("telefono", "").strip(),
                 )
             if not client.email:
                 client.email = email

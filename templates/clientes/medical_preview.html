@@ -7,7 +7,7 @@
 {% if filas %}
 <form method="post">
     {% csrf_token %}<input type="hidden" name="accion" value="confirmar">
-    <p class="form-help-text">Las coincidencias pueden asociarse a un perfil existente. Las respuestas sin coincidencia y con correo válido vienen marcadas para solicitar la creación de un perfil. Una administradora revisará los datos y deberá validar el RUT antes de aprobar; esto no crea una cuenta de acceso.</p>
+    <p class="form-help-text">Las coincidencias pueden asociarse a un perfil existente. Las respuestas sin coincidencia y con correo válido vienen marcadas para solicitar la creación de un perfil. Una administradora revisará los datos. Si falta el RUT, podrá completarlo después. La aprobación crea un perfil de clienta.</p>
     <div class="medical-preview-list">
     {% for fila in filas %}
         <article class="content-card medical-preview-card">

@@ -12,7 +12,7 @@
 {% for solicitud in solicitudes %}
     <article class="content-card medical-preview-card">
         <div class="medical-preview-heading"><div><span class="section-eyebrow">{{ solicitud.get_estado_display }}</span><h3>{{ solicitud.nombre_reportado }}</h3><p>{{ solicitud.email_reportado }} · {{ solicitud.telefono_reportado|default:"Sin teléfono" }}</p></div><span class="status-badge">{{ solicitud.creada_en|date:"d/m/Y H:i" }}</span></div>
-        {% if solicitud.cliente %}<p>Perfil vinculado: <a href="{% url 'clientes:detail' solicitud.cliente_id %}">{{ solicitud.cliente }} · {{ solicitud.cliente.rut }}</a></p>{% endif %}
+        {% if solicitud.cliente %}<p>Perfil vinculado: <a href="{% url 'clientes:detail' solicitud.cliente_id %}">{{ solicitud.cliente }} · {{ solicitud.cliente.rut|default:"RUT pendiente" }}</a></p>{% endif %}
         {% if solicitud.resolucion %}<p>{{ solicitud.resolucion }}</p>{% endif %}
         <a class="btn btn-outline-light" href="{% url 'clientes:medical_request_review' solicitud.pk %}">Revisar solicitud y ficha</a>
     </article>

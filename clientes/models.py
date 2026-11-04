@@ -17,8 +17,10 @@ class Cliente(models.Model):
         "RUT",
         max_length=12,
         unique=True,
+        blank=True,
+        null=True,
         validators=[RutChilenoValidator()],
-        help_text="Puedes ingresarlo con puntos y guion; se guardará normalizado.",
+        help_text="Opcional. Puedes completarlo después.",
     )
     email = models.EmailField("correo electrónico", blank=True)
     telefono = models.CharField("teléfono", max_length=30, blank=True)
@@ -48,6 +50,7 @@ class Cliente(models.Model):
 
     def clean(self):
         super().clean()
+        self.rut = (self.rut or "").strip() or None
         if self.rut:
             try:
                 self.rut = normalize_rut(self.rut)
@@ -55,6 +58,7 @@ class Cliente(models.Model):
                 raise ValidationError({"rut": exc.messages}) from exc
 
     def save(self, *args, **kwargs):
+        self.rut = (self.rut or "").strip() or None
         if self.rut:
             try:
                 self.rut = normalize_rut(self.rut)
