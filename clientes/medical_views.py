@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import ValidationError as CoreValidationError
 from django.core.validators import validate_email
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -266,41 +266,49 @@ class ResolverSolicitudAltaView(LoginRequiredMixin, UserPassesTestMixin, View):
             if not form.is_valid():
                 messages.error(request, "La solicitud sigue pendiente. Revisa los campos indicados y vuelve a aprobarla.")
                 return self.render(request, solicitud, form)
-            data = form.cleaned_data
-            email = (data.get("email") or "").strip().casefold()
-            client = data.get("cliente_existente")
-            perfil_existente = client is not None
-            if not client:
-                if data.get("rut") and Cliente.objects.filter(rut=data["rut"]).exists():
-                    form.add_error("rut", "Ese RUT ya pertenece a una clienta; selecciona el perfil existente.")
-                    return self.render(request, solicitud, form)
-                client = Cliente.objects.create(
-                    nombres=data["nombres"].strip(), apellidos=data["apellidos"].strip(),
-                    rut=data.get("rut") or None, email=email, telefono=data.get("telefono", "").strip(),
-                )
-            if not client.email:
-                client.email = email
-            if not client.telefono and data.get("telefono"):
-                client.telefono = data["telefono"].strip()
-            client.save(update_fields=["email", "telefono", "updated_at"])
-            FichaMedica.objects.create(
-                cliente=client, importacion=solicitud.importacion,
-                respuestas=solicitud.respuestas, respondida_en=solicitud.respondida_en,
-                huella=solicitud.huella, asociada_por=request.user,
-                criterio_asociacion="Solicitud aprobada",
-                motivo_asociacion=data.get("motivo_vinculo", "").strip(),
-            )
-            solicitud.estado = SolicitudAltaCliente.Estado.APROBADA
-            solicitud.cliente = client
-            solicitud.revisada_por = request.user
-            solicitud.revisada_en = timezone.now()
-            solicitud.resolucion = (
-                "Ficha médica vinculada al perfil existente."
-                if perfil_existente else "Perfil creado y ficha médica vinculada."
-            )
-            solicitud.save(update_fields=["estado", "cliente", "revisada_por", "revisada_en", "resolucion"])
+            client = self.aprobar(solicitud, form, request.user)
+            if client is None:
+                return self.render(request, solicitud, form)
         messages.success(request, f"Solicitud aprobada para {client}. {solicitud.resolucion}")
         return redirect("clientes:medical_requests")
+
+
+    @staticmethod
+    def aprobar(solicitud, form, user):
+        data = form.cleaned_data
+        email = (data.get("email") or "").strip().casefold()
+        client = data.get("cliente_existente")
+        perfil_existente = client is not None
+        if not client:
+            if data.get("rut") and Cliente.objects.filter(rut=data["rut"]).exists():
+                form.add_error("rut", "Ese RUT ya pertenece a una clienta; selecciona el perfil existente.")
+                return None
+            client = Cliente.objects.create(
+                nombres=data["nombres"].strip(), apellidos=data["apellidos"].strip(),
+                rut=data.get("rut") or None, email=email, telefono=data.get("telefono", "").strip(),
+            )
+        if not client.email:
+            client.email = email
+        if not client.telefono and data.get("telefono"):
+            client.telefono = data["telefono"].strip()
+        client.save(update_fields=["email", "telefono", "updated_at"])
+        FichaMedica.objects.create(
+            cliente=client, importacion=solicitud.importacion,
+            respuestas=solicitud.respuestas, respondida_en=solicitud.respondida_en,
+            huella=solicitud.huella, asociada_por=user,
+            criterio_asociacion="Solicitud aprobada",
+            motivo_asociacion=data.get("motivo_vinculo", "").strip(),
+        )
+        solicitud.estado = SolicitudAltaCliente.Estado.APROBADA
+        solicitud.cliente = client
+        solicitud.revisada_por = user
+        solicitud.revisada_en = timezone.now()
+        solicitud.resolucion = (
+            "Ficha médica vinculada al perfil existente."
+            if perfil_existente else "Perfil creado y ficha médica vinculada."
+        )
+        solicitud.save(update_fields=["estado", "cliente", "revisada_por", "revisada_en", "resolucion"])
+        return client
 
     @staticmethod
     def form_for(solicitud, data=None):
@@ -323,3 +331,56 @@ class ResolverSolicitudAltaView(LoginRequiredMixin, UserPassesTestMixin, View):
             "page_title": "Revisar solicitud de alta",
             "solicitud": solicitud, "form": form,
         })
+
+
+@method_decorator(never_cache, name="dispatch")
+class AprobarSolicitudesAltaView(ResolverSolicitudAltaView):
+    http_method_names = ["post"]
+
+    def post(self, request):
+        seleccion = request.POST.getlist("solicitudes")
+        if not seleccion:
+            messages.info(request, "Selecciona al menos una solicitud.")
+            return redirect("clientes:medical_requests")
+        if len(seleccion) > 100 or any(
+            not pk.isascii() or not pk.isdigit() or len(pk) > 18 for pk in seleccion
+        ):
+            return HttpResponseBadRequest("Selección de solicitudes no válida.")
+
+        aprobadas = 0
+        ids = sorted({int(pk) for pk in seleccion})
+        for pk in ids:
+            try:
+                with transaction.atomic():
+                    solicitud = SolicitudAltaCliente.objects.select_for_update().filter(
+                        pk=pk, estado=SolicitudAltaCliente.Estado.PENDIENTE,
+                    ).first()
+                    if not solicitud:
+                        continue
+                    datos = self.form_for(solicitud).initial
+                    form = self.form_for(solicitud, datos)
+                    if not form.is_valid():
+                        continue
+                    clientas = Cliente.objects.all()
+                    _, criterio = buscar_coincidencia({
+                        "correo": datos["email"], "telefono": datos["telefono"],
+                    }, clientas)
+                    if criterio != "Sin coincidencia de contacto" or clientas.filter(
+                        nombres__iexact=datos["nombres"], apellidos__iexact=datos["apellidos"],
+                    ).exists():
+                        continue
+                    if self.aprobar(solicitud, form, request.user) is None:
+                        continue
+                aprobadas += 1
+            except (CoreValidationError, IntegrityError):
+                continue
+
+        if aprobadas:
+            messages.success(request, f"Solicitudes aprobadas: {aprobadas}.")
+        if aprobadas < len(ids):
+            messages.warning(
+                request,
+                f"Solicitudes omitidas: {len(ids) - aprobadas}. "
+                "Revisa individualmente las que sigan pendientes por datos incompletos o coincidencias con perfiles.",
+            )
+        return redirect("clientes:medical_requests")

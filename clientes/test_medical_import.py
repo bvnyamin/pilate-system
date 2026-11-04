@@ -320,6 +320,35 @@ class GoogleFormsWebhookTests(TestCase):
         self.assertEqual(Cliente.objects.filter(rut__isnull=True).count(), 2)
         self.assertEqual(FichaMedica.objects.count(), 2)
 
+    def test_bulk_approval_creates_selected_profiles_and_leaves_contact_match_pending(self):
+        ids = []
+        for name, email, phone in (
+            ("Primera Ficticia", "primera@example.test", "+56912345678"),
+            ("Segunda Ficticia", "segunda@example.test", "+56923456789"),
+            ("Posible Duplicada", "primera@example.test", "+56934567890"),
+            ("No Seleccionada", "otra@example.test", "+56945678901"),
+        ):
+            values = self.payload["values"].copy()
+            values[1:4] = [name, email, phone]
+            response = self.submit({**self.payload, "values": values})
+            self.assertEqual(response.status_code, 201)
+            ids.append(response.json()["solicitud"])
+
+        self.client.force_login(self.admin)
+        url = reverse("clientes:medical_requests_approve")
+        response = self.client.post(url, {"solicitudes": ids[:3]}, follow=True)
+        self.assertContains(response, "Solicitudes aprobadas: 2.")
+        self.assertContains(response, "Solicitudes omitidas: 1.")
+        self.assertEqual(
+            set(SolicitudAltaCliente.objects.filter(
+                estado=SolicitudAltaCliente.Estado.APROBADA,
+            ).values_list("pk", flat=True)),
+            set(ids[:2]),
+        )
+        self.client.post(url, {"solicitudes": ids[:3]})
+        self.assertEqual(Cliente.objects.filter(rut__isnull=True).count(), 2)
+        self.assertEqual(FichaMedica.objects.count(), 2)
+
     def test_wrong_secret_is_rejected_without_storing_medical_data(self):
         response = self.submit(secret="wrong-secret")
         self.assertEqual(response.status_code, 403)

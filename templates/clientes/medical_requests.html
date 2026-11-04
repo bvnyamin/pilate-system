@@ -8,9 +8,22 @@
     <a class="status-tab{% if estado_seleccionado == 'aprobada' %} active{% endif %}" href="?estado=aprobada">Aprobadas</a>
     <a class="status-tab{% if estado_seleccionado == 'rechazada' %} active{% endif %}" href="?estado=rechazada">Rechazadas</a>
 </nav>
+{% if request.user.is_staff and estado_seleccionado == "pendiente" and solicitudes %}
+<form id="aprobar-solicitudes" method="post" action="{% url 'clientes:medical_requests_approve' %}" class="content-card medical-preview-card mb-3">
+    {% csrf_token %}
+    <p>Revisa y marca las fichas que quieras aprobar. Las que necesiten correcciones o puedan corresponder a un perfil existente quedarán pendientes.</p>
+    <div class="d-flex flex-wrap align-items-center gap-3">
+        <label><input type="checkbox" id="seleccionar-solicitudes"> Seleccionar todas las visibles</label>
+        <button class="btn btn-primary" type="submit">Aprobar seleccionadas</button>
+    </div>
+</form>
+{% endif %}
 <div class="medical-preview-list">
 {% for solicitud in solicitudes %}
     <article class="content-card medical-preview-card">
+        {% if request.user.is_staff and estado_seleccionado == "pendiente" %}
+        <label class="mb-2"><input type="checkbox" name="solicitudes" value="{{ solicitud.pk }}" form="aprobar-solicitudes"> Seleccionar a {{ solicitud.nombre_reportado }}</label>
+        {% endif %}
         <div class="medical-preview-heading"><div><span class="section-eyebrow">{{ solicitud.get_estado_display }}</span><h3>{{ solicitud.nombre_reportado }}</h3><p>{{ solicitud.email_reportado }} · {{ solicitud.telefono_reportado|default:"Sin teléfono" }}</p></div><span class="status-badge">{{ solicitud.creada_en|date:"d/m/Y H:i" }}</span></div>
         {% if solicitud.cliente %}<p>Perfil vinculado: <a href="{% url 'clientes:detail' solicitud.cliente_id %}">{{ solicitud.cliente }} · {{ solicitud.cliente.rut|default:"RUT pendiente" }}</a></p>{% endif %}
         {% if solicitud.resolucion %}<p>{{ solicitud.resolucion }}</p>{% endif %}
@@ -18,4 +31,27 @@
     </article>
 {% empty %}<article class="content-card client-empty-state"><h3>No hay solicitudes para mostrar</h3><p>Cuando importes una respuesta nueva como solicitud, aparecerá aquí para revisión.</p></article>{% endfor %}
 </div>
+{% if request.user.is_staff and estado_seleccionado == "pendiente" and solicitudes %}
+<script>
+    (() => {
+        const form = document.getElementById("aprobar-solicitudes");
+        const all = document.getElementById("seleccionar-solicitudes");
+        const boxes = Array.from(document.querySelectorAll('input[form="aprobar-solicitudes"]'));
+        const button = form.querySelector('button[type="submit"]');
+        function update() {
+            const count = boxes.filter(box => box.checked).length;
+            all.checked = count === boxes.length;
+            all.indeterminate = count > 0 && !all.checked;
+            button.disabled = count === 0;
+            button.textContent = count ? `Aprobar seleccionadas (${count})` : "Aprobar seleccionadas";
+        }
+        all.addEventListener("change", () => {
+            boxes.forEach(box => { box.checked = all.checked; });
+            update();
+        });
+        boxes.forEach(box => box.addEventListener("change", update));
+        update();
+    })();
+</script>
+{% endif %}
 {% endblock %}
