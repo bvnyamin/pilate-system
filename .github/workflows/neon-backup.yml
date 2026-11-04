@@ -27,11 +27,13 @@ jobs:
           : "${BACKUP_AGE_RECIPIENT:?Configura la clave pública age}"
           sudo apt-get update -qq
           sudo apt-get install -y -qq age
-          export PGDATABASE="$NEON_BACKUP_URL"
-          unset NEON_BACKUP_URL
+          case "$NEON_BACKUP_URL" in
+            postgresql://*|postgres://*) ;;
+            *) echo "::error::NEON_BACKUP_URL debe contener solo la URL de conexión de Neon"; exit 1 ;;
+          esac
           mkdir -p "$RUNNER_TEMP/aledra-backup"
-          docker run --rm --env PGDATABASE postgres:18-alpine \
-            pg_dump --format=custom --no-password \
+          docker run --rm --env NEON_BACKUP_URL postgres:18-alpine \
+            sh -ec 'pg_dump --dbname="$NEON_BACKUP_URL" --format=custom --no-password' \
             | age --encrypt --recipient "$BACKUP_AGE_RECIPIENT" \
               --output "$RUNNER_TEMP/aledra-backup/neon.dump.age"
       - name: Guardar copia cifrada fuera de Neon
