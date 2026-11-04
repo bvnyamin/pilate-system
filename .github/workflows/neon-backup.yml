@@ -1,0 +1,43 @@
+name: Respaldo cifrado de Neon
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 0,6,12,18 * * *"
+
+permissions: {}
+
+concurrency:
+  group: neon-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      NEON_BACKUP_URL: ${{ secrets.NEON_BACKUP_URL }}
+      BACKUP_AGE_RECIPIENT: ${{ vars.BACKUP_AGE_RECIPIENT }}
+    steps:
+      - name: Exportar y cifrar
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${NEON_BACKUP_URL:?Configura la conexión directa de Neon}"
+          : "${BACKUP_AGE_RECIPIENT:?Configura la clave pública age}"
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq age
+          export PGDATABASE="$NEON_BACKUP_URL"
+          unset NEON_BACKUP_URL
+          mkdir -p "$RUNNER_TEMP/aledra-backup"
+          docker run --rm --env PGDATABASE postgres:18-alpine \
+            pg_dump --format=custom --no-password \
+            | age --encrypt --recipient "$BACKUP_AGE_RECIPIENT" \
+              --output "$RUNNER_TEMP/aledra-backup/neon.dump.age"
+      - name: Guardar copia cifrada fuera de Neon
+        uses: actions/upload-artifact@v4
+        with:
+          name: aledra-neon-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/aledra-backup/neon.dump.age
+          if-no-files-found: error
+          retention-days: 30
