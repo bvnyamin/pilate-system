@@ -102,6 +102,33 @@ class AsistenciaModelTests(TestCase):
 
 
 class AsistenciaViewsTests(TestCase):
+    def test_clientas_sin_marcar_se_registran_en_otro_bloque(self):
+        otra = Cliente.objects.create(nombres="Ana", apellidos="Zapata")
+        otro_plan = ClientePlan.objects.create(
+            cliente=otra, plan=self.plan, periodo_mes=9, periodo_anio=2026,
+            fecha_inicio=date(2026, 9, 1),
+            fecha_fin=date(2026, 9, 30),
+        )
+        tarde = Sesion.objects.create(fecha=self.sesion.fecha, hora=time(19, 0))
+        temprano_url = reverse("asistencias:roster", args=[self.sesion.pk])
+        tarde_url = reverse("asistencias:roster", args=[tarde.pk])
+        self.assertContains(self.client.get(temprano_url), "Sin marcar")
+        primeros = {
+            "form-TOTAL_FORMS": "2", "form-INITIAL_FORMS": "2",
+            "form-0-cliente_plan": self.mensualidad.pk, "form-0-estado": Asistencia.Estado.PRESENTE,
+            "form-1-cliente_plan": otro_plan.pk, "form-1-estado": "",
+        }
+        self.assertRedirects(self.client.post(temprano_url, primeros), temprano_url)
+        self.assertFalse(otro_plan.asistencias.exists())
+        self.assertEqual(otro_plan.clases_restantes, self.plan.clases_por_mes)
+        self.assertEqual(self.client.get(tarde_url).context["total_alumnas"], 1)
+        self.assertRedirects(self.client.post(tarde_url, {
+            "form-TOTAL_FORMS": "1", "form-INITIAL_FORMS": "1",
+            "form-0-cliente_plan": otro_plan.pk, "form-0-estado": Asistencia.Estado.PRESENTE,
+        }), tarde_url)
+        self.assertEqual(otro_plan.asistencias.get().sesion, tarde)
+        self.assertEqual(self.mensualidad.asistencias.get().sesion, self.sesion)
+
     def test_eliminar_sesion_devuelve_clase(self):
         asistencia = Asistencia.objects.create(
             sesion=self.sesion, cliente_plan=self.mensualidad, estado=Asistencia.Estado.PRESENTE,
@@ -167,6 +194,22 @@ class AsistenciaViewsTests(TestCase):
 
         all_response = self.client.get(reverse("asistencias:list"), {"todas": "1"})
         self.assertEqual(all_response.context["sesiones"].count(), 1)
+
+    def test_month_filter_keeps_year_and_search_on_next_page(self):
+        Sesion.objects.bulk_create([
+            Sesion(fecha=date(2026, 10, day), hora=time(18), nombre="Pilates mensual")
+            for day in range(1, 14)
+        ] + [
+            Sesion(fecha=date(2025, 10, 1), hora=time(18), nombre="Pilates mensual"),
+            Sesion(fecha=date(2026, 10, 14), hora=time(18), nombre="Otra sesión"),
+        ])
+        url = reverse("asistencias:list")
+        filtros = {"mes": "2026-10", "q": "Pilates mensual", "fecha": "2026-09-15"}
+        primera = self.client.get(url, filtros)
+        self.assertEqual(primera.context["paginator"].count, 13)
+        self.assertContains(primera, "mes=2026-10")
+        segunda = self.client.get(url, {**filtros, "page": 2})
+        self.assertEqual([sesion.fecha for sesion in segunda.context["sesiones"]], [date(2026, 10, 1)])
 
     def test_list_filters_sessions_by_client_status_and_time_block(self):
         morning = Sesion.objects.create(fecha=self.sesion.fecha, hora=time(8, 0))

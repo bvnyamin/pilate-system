@@ -29,12 +29,17 @@ class SesionListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         selected_date = self.request.GET.get("fecha", "").strip()
+        mes = self.request.GET.get("mes", "")
+        try:
+            self.selected_month = date.fromisoformat(f"{mes}-01") if len(mes) == 7 else None
+        except ValueError:
+            self.selected_month = None
         self.search_query = self.request.GET.get("q", "").strip()
         self.selected_status = self.request.GET.get("estado", "").strip()
         self.selected_block = self.request.GET.get("bloque", "").strip()
         self.show_all_dates = self.request.GET.get("todas") == "1" and not selected_date
-        self.selected_date = None if self.show_all_dates else timezone.localdate()
-        if selected_date:
+        self.selected_date = None if self.show_all_dates or self.selected_month else timezone.localdate()
+        if selected_date and not self.selected_month:
             try:
                 self.selected_date = date.fromisoformat(selected_date)
             except ValueError:
@@ -43,6 +48,8 @@ class SesionListView(LoginRequiredMixin, ListView):
         queryset = Sesion.objects.all().order_by("-fecha", "-hora")
         if self.selected_date:
             queryset = queryset.filter(fecha=self.selected_date).order_by("hora")
+        if self.selected_month:
+            queryset = queryset.filter(fecha__year=self.selected_month.year, fecha__month=self.selected_month.month)
         if self.search_query:
             queryset = queryset.filter(
                 Q(nombre__icontains=self.search_query)
@@ -65,6 +72,11 @@ class SesionListView(LoginRequiredMixin, ListView):
         context.update({
             "page_title": "Asistencias",
             "selected_date": self.selected_date.isoformat() if self.selected_date else "",
+            "selected_month": self.selected_month,
+            "month_choices": sorted(
+                set(Sesion.objects.dates("fecha", "month")) | ({self.selected_month} if self.selected_month else set()),
+                reverse=True,
+            ),
             "today": timezone.localdate().isoformat(),
             "show_all_dates": self.show_all_dates,
             "search_query": self.search_query,
@@ -112,7 +124,7 @@ class SesionDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
         sesion = get_object_or_404(Sesion.objects.select_for_update(), pk=pk)
         filtros = urlencode([
             (clave, valor) for clave, valor in parse_qsl(request.POST.get("filtros", ""))
-            if clave in {"fecha", "q", "estado", "bloque", "todas", "page"}
+            if clave in {"fecha", "mes", "q", "estado", "bloque", "todas", "page"}
         ])
         destino = reverse("asistencias:list") + (f"?{filtros}" if filtros else "")
         asistencias = sesion.asistencias.all()
@@ -236,7 +248,7 @@ class SesionRosterView(LoginRequiredMixin, View):
         initial = [
             {
                 "cliente_plan": subscription.pk,
-                "estado": current[subscription.pk].estado if subscription.pk in current else Asistencia.Estado.PRESENTE,
+                "estado": current[subscription.pk].estado if subscription.pk in current else "",
                 "observaciones": current[subscription.pk].observaciones if subscription.pk in current else "",
                 "motivo_cancelacion": current[subscription.pk].motivo_cancelacion if subscription.pk in current else "",
                 "fecha_aviso_cancelacion": current[subscription.pk].fecha_aviso_cancelacion if subscription.pk in current else "",
@@ -261,14 +273,17 @@ class SesionRosterView(LoginRequiredMixin, View):
         ).values_list("cliente_plan_id", flat=True))
         pending |= already_recovered
         used_here = already_recovered
-        for form, subscription in zip(formset.forms, roster):
-            choices = list(Asistencia.Estado.choices)
-            if subscription.pk in pending:
-                choices = [choice for choice in choices if choice[0] != Asistencia.Estado.RECUPERACION]
-                label = "Recuperación ya registrada" if subscription.pk in used_here else "Recuperó (usar clase pendiente)"
-                choices.insert(2, (Asistencia.Estado.RECUPERACION, label))
-            else:
-                choices = [choice for choice in choices if choice[0] != Asistencia.Estado.RECUPERACION]
+        pending_ids = {str(pk) for pk in pending}
+        used_ids = {str(pk) for pk in used_here}
+        for form in formset.forms:
+            plan_id = str(form["cliente_plan"].value())
+            choices = [
+                choice for choice in form.fields["estado"].choices
+                if choice[0] != Asistencia.Estado.RECUPERACION
+            ]
+            if plan_id in pending_ids:
+                label = "Recuperación ya registrada" if plan_id in used_ids else "Recuperó (usar clase pendiente)"
+                choices.insert(3, (Asistencia.Estado.RECUPERACION, label))
             form.fields["estado"].choices = choices
 
     def post(self, request, pk):
@@ -282,9 +297,12 @@ class SesionRosterView(LoginRequiredMixin, View):
         )
         self.add_recovery_choices(formset, roster, sesion)
         if formset.is_valid():
-            submitted_ids = [form.cleaned_data["cliente_plan"].pk for form in formset]
-            expected_ids = [subscription.pk for subscription in roster]
-            if len(submitted_ids) != len(set(submitted_ids)) or set(submitted_ids) != set(expected_ids):
+            submitted_ids = [
+                form.cleaned_data["cliente_plan"].pk for form in formset
+                if form.cleaned_data.get("cliente_plan")
+            ]
+            expected_ids = {subscription.pk for subscription in self.get_roster(sesion)}
+            if len(submitted_ids) != len(formset.forms) or len(submitted_ids) != len(set(submitted_ids)) or not expected_ids.issubset(submitted_ids):
                 formset._non_form_errors = formset.error_class(["La lista de mensualidades cambió. Recarga la página e inténtalo otra vez."])
             else:
                 invalid = False
@@ -296,6 +314,8 @@ class SesionRosterView(LoginRequiredMixin, View):
                     values = form.cleaned_data
                     plan = values["cliente_plan"]
                     state = values["estado"]
+                    if not state:
+                        continue
                     existing = current.get(plan.pk)
                     if existing:
                         recovery = getattr(existing, "recuperacion_generada", None)
@@ -360,6 +380,8 @@ class SesionRosterView(LoginRequiredMixin, View):
                     for form in formset:
                         values = form.cleaned_data
                         state = values["estado"]
+                        if not state:
+                            continue
                         asistencia, _ = Asistencia.objects.update_or_create(
                             sesion=sesion,
                             cliente_plan=values["cliente_plan"],
@@ -403,7 +425,10 @@ class SesionRosterView(LoginRequiredMixin, View):
                                 if recovery and recovery.estado == RecuperacionClase.Estado.PENDIENTE:
                                     recovery.estado = RecuperacionClase.Estado.INVALIDADA
                                     recovery.save(update_fields=["estado"])
-                messages.success(request, "Asistencia guardada. Presente y Ausente descuentan una clase; las recuperaciones pendientes se usan sin otro descuento.")
+                if any(form.cleaned_data["estado"] for form in formset):
+                    messages.success(request, "Asistencia guardada. Las clientas sin marcar siguen disponibles para otro bloque.")
+                else:
+                    messages.info(request, "No se registraron asistencias. Marca un estado para las clientas de este bloque.")
                 return redirect("asistencias:roster", pk=sesion.pk)
         return self.render_to_response(request, sesion, roster, formset)
 
@@ -426,6 +451,7 @@ class SesionRosterView(LoginRequiredMixin, View):
                 rows.append({
                     "form": form,
                     "subscription": subscription,
+                    "has_attendance": attendance is not None,
                     "recovery_state": (
                         "Utilizada" if used_recovery and used_recovery.estado == RecuperacionClase.Estado.UTILIZADA
                         else recovery.get_estado_display() if recovery else ""

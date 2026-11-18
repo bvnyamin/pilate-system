@@ -104,7 +104,9 @@ class AsistenciaRowForm(forms.Form):
         queryset=ClientePlan.objects.none(),
         widget=forms.HiddenInput,
     )
-    estado = forms.ChoiceField(choices=Asistencia.Estado.choices)
+    estado = forms.ChoiceField(
+        required=False, choices=[("", "Sin marcar"), *Asistencia.Estado.choices],
+    )
     observaciones = forms.CharField(required=False, widget=forms.TextInput())
     motivo_cancelacion = forms.CharField(required=False, widget=forms.TextInput())
     fecha_aviso_cancelacion = forms.DateTimeField(

@@ -48,12 +48,12 @@
                             <div class="attendance-state-field">
                                 <span class="visually-hidden">Estado de {{ row.subscription.cliente }}</span>
                                 <div class="attendance-status-buttons" role="group" aria-label="Estado de {{ row.subscription.cliente }}">
-                                    {% for value, label in row.form.estado.field.choices %}{% if value != 'justificado' %}
+                                    {% for value, label in row.form.estado.field.choices %}{% if value != 'justificado' %}{% if value or not row.has_attendance %}
                                         <label class="attendance-status-option status-{{ value }}">
                                             <input type="radio" name="{{ row.form.estado.html_name }}" value="{{ value }}" data-attendance-state{% if row.form.estado.value == value %} checked{% endif %}>
                                             <span>{{ label }}</span>
                                         </label>
-                                    {% endif %}{% endfor %}
+                                    {% endif %}{% endif %}{% endfor %}
                                     {% if row.form.estado.value == 'justificado' %}<input type="radio" class="visually-hidden" name="{{ row.form.estado.html_name }}" value="justificado" checked aria-hidden="true" tabindex="-1">{% endif %}
                                 </div>
                                 {% for error in row.form.estado.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
@@ -80,7 +80,7 @@
                 {% endfor %}
             </div>
             <div class="attendance-save-row">
-                <p><i class="bi bi-info-circle" aria-hidden="true"></i> Presente y Ausente descuentan una clase. Canceló solo genera recuperación si se avisó con 4 horas de anticipación.</p>
+                <p><i class="bi bi-info-circle" aria-hidden="true"></i> Deja sin marcar a quienes van en otro bloque. Presente y Ausente descuentan una clase. Canceló genera recuperación con al menos 4 horas de aviso.</p>
                 <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle" aria-hidden="true"></i> Guardar asistencia</button>
             </div>
         </form>

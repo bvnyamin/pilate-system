@@ -3,6 +3,13 @@
 {% block title %}Asistencias{% endblock %}
 {% block extra_css %}
 <style>
+    @media (min-width: 1200px) {
+        .attendance-filter-bar { grid-template-columns: minmax(150px, 1.5fr) repeat(4, minmax(110px, 1fr)) auto auto; }
+    }
+    @media (min-width: 576px) and (max-width: 1199px) {
+        .attendance-filter-bar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .attendance-filter-search { grid-column: 1 / -1; }
+    }
     .session-delete-dialog {
         position: fixed;
         inset: 0;
@@ -14,6 +21,18 @@
     }
     .session-delete-dialog::backdrop { background: rgb(0 0 0 / 65%); }
 </style>
+{% endblock %}
+{% block extra_js %}
+<script>
+    document.getElementById("attendance-date").addEventListener("change", (event) => {
+        const fecha = event.currentTarget;
+        const mes = fecha.form.elements.mes;
+        if (fecha.value && mes.value) {
+            mes.value = "";
+            mes.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+    });
+</script>
 {% endblock %}
 {% block content %}
 <section class="page-intro-row">
@@ -38,7 +57,11 @@
             <i class="bi bi-search" aria-hidden="true"></i>
             <input type="search" name="q" value="{{ search_query }}" placeholder="Buscar clienta o sesión…">
         </label>
-        <label><span>Fecha</span><input class="form-control" id="attendance-date" type="date" name="fecha" value="{% if selected_date %}{{ selected_date }}{% elif not show_all_dates %}{{ today }}{% endif %}"></label>
+        <label><span>Fecha</span><input class="form-control" id="attendance-date" type="date" name="fecha" value="{{ selected_date }}"></label>
+        <label><span>Mes</span><select class="form-select" name="mes" aria-label="Filtrar por mes y año">
+            <option value="">Sin filtro mensual</option>
+            {% for month in month_choices %}<option value="{{ month|date:'Y-m' }}"{% if month == selected_month %} selected{% endif %}>{{ month|date:"F Y"|capfirst }}</option>{% endfor %}
+        </select></label>
         <label><span>Bloque</span><select class="form-select" name="bloque"><option value="">Todos</option>{% for value, label in block_choices %}<option value="{{ value }}"{% if selected_block == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
         <label><span>Estado</span><select class="form-select" name="estado"><option value="">Todos</option>{% for value, label in status_choices %}<option value="{{ value }}"{% if selected_status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
         <button class="btn btn-outline-light" type="submit"><i class="bi bi-sliders" aria-hidden="true"></i> Aplicar</button>
@@ -80,16 +103,16 @@
         </div>
         {% if is_paginated %}
             <nav class="pagination-nav attendance-pagination" aria-label="Paginación de sesiones">
-                {% if page_obj.has_previous %}<a href="?{% if selected_date %}fecha={{ selected_date }}&amp;{% endif %}{% if show_all_dates %}todas=1&amp;{% endif %}{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}{% if selected_block %}bloque={{ selected_block }}&amp;{% endif %}{% if selected_status %}estado={{ selected_status }}&amp;{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Página anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>{% endif %}
+                {% if page_obj.has_previous %}<a href="{% querystring page=page_obj.previous_page_number %}" aria-label="Página anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>{% endif %}
                 <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
-                {% if page_obj.has_next %}<a href="?{% if selected_date %}fecha={{ selected_date }}&amp;{% endif %}{% if show_all_dates %}todas=1&amp;{% endif %}{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}{% if selected_block %}bloque={{ selected_block }}&amp;{% endif %}{% if selected_status %}estado={{ selected_status }}&amp;{% endif %}page={{ page_obj.next_page_number }}" aria-label="Página siguiente"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>{% endif %}
+                {% if page_obj.has_next %}<a href="{% querystring page=page_obj.next_page_number %}" aria-label="Página siguiente"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>{% endif %}
             </nav>
         {% endif %}
     {% else %}
         <div class="client-empty-state">
             <span class="empty-state-icon"><i class="bi bi-calendar2-check" aria-hidden="true"></i></span>
             <h3>No hay sesiones para mostrar</h3>
-            <p>Prueba otra fecha o crea una sesión para empezar a registrar asistencias.</p>
+            <p>Prueba otra fecha o mes, o crea una sesión para empezar a registrar asistencias.</p>
             <a class="btn btn-primary" href="{% url 'asistencias:create' %}{% if selected_date %}?fecha={{ selected_date }}{% endif %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Crear sesión</a>
         </div>
     {% endif %}
