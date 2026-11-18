@@ -1,0 +1,18 @@
+<div class="subscription-actions">
+                        {% if mensualidad.tiene_movimientos %}
+                            <span class="small text-body-secondary"><i class="bi bi-lock" aria-hidden="true"></i> Edición bloqueada</span>
+                        {% else %}
+                            <a class="btn btn-outline-light" href="{% url 'mensualidades:update' mensualidad.pk %}{% querystring %}"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</a>
+                        {% endif %}
+                        {% if mensualidad.estado == 'vigente' %}
+                            <form method="post" action="{% url 'mensualidades:set_status' mensualidad.pk %}{% querystring %}">
+                                {% csrf_token %}<input type="hidden" name="estado" value="finalizado">
+                                <button class="btn btn-quiet" type="submit" aria-label="Finalizar mensualidad de {{ mensualidad.cliente }}">Finalizar</button>
+                            </form>
+                        {% elif mensualidad.estado == 'finalizado' %}
+                            <form method="post" action="{% url 'mensualidades:set_status' mensualidad.pk %}{% querystring %}">
+                                {% csrf_token %}<input type="hidden" name="estado" value="vigente">
+                                <button class="btn btn-quiet" type="submit" aria-label="Reactivar mensualidad de {{ mensualidad.cliente }}">Reactivar</button>
+                            </form>
+                        {% endif %}
+                    </div>

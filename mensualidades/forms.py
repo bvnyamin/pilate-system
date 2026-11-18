@@ -11,11 +11,15 @@ from .models import ClientePlan, calcular_fecha_fin_mensual
 
 
 class PlanPriceSelect(forms.Select):
+    precio_acordado = None
+
     def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
         option = super().create_option(name, value, label, selected, index, subindex, attrs)
         instance = getattr(value, "instance", None)
         if instance is not None:
             option["attrs"]["data-precio-clp"] = instance.precio_lista_clp
+            if self.precio_acordado and instance.pk == self.precio_acordado[0]:
+                option["attrs"]["data-precio-clp"] = self.precio_acordado[1]
         return option
 
 
@@ -103,6 +107,8 @@ class ClientePlanForm(forms.ModelForm):
         self.fields["estado"].widget.attrs["class"] = "form-select"
         self.fields["descuento_porcentaje"].widget.attrs["inputmode"] = "decimal"
         self.fields["plan"].help_text = "El precio base se toma del catálogo y queda guardado para este período."
+        if self.instance.pk:
+            self.fields["plan"].widget.precio_acordado = (self.instance.plan_id, self.instance.precio_base_clp)
 
     def clean(self):
         cleaned_data = super().clean()

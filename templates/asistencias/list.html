@@ -1,6 +1,20 @@
 {% extends "base.html" %}
 {% load static %}
 {% block title %}Asistencias{% endblock %}
+{% block extra_css %}
+<style>
+    .session-delete-dialog {
+        position: fixed;
+        inset: 0;
+        margin: auto;
+        width: min(28rem, calc(100% - 2rem));
+        max-height: calc(100% - 2rem);
+        overflow: auto;
+        color: inherit;
+    }
+    .session-delete-dialog::backdrop { background: rgb(0 0 0 / 65%); }
+</style>
+{% endblock %}
 {% block content %}
 <section class="page-intro-row">
     <div>
@@ -45,6 +59,22 @@
                         <p><i class="bi bi-people" aria-hidden="true"></i> {{ sesion.asistencias.count }} registro{{ sesion.asistencias.count|pluralize:"s" }}</p>
                     </div>
                     <a class="btn btn-outline-light" href="{% url 'asistencias:roster' sesion.pk %}">Tomar asistencia <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                    {% if request.user.is_staff %}
+                    <button type="button" class="btn btn-outline-danger" aria-haspopup="dialog"
+                            onclick="document.getElementById('eliminar-sesion-{{ sesion.pk }}').showModal()">Eliminar sesión</button>
+                    <dialog id="eliminar-sesion-{{ sesion.pk }}" class="session-delete-dialog content-card"
+                            aria-labelledby="titulo-eliminar-sesion-{{ sesion.pk }}">
+                        <h3 id="titulo-eliminar-sesion-{{ sesion.pk }}">Eliminar sesión</h3>
+                        <p>{{ sesion.fecha|date:"d/m/Y" }} · {{ sesion.hora|time:"H:i" }}</p>
+                        <p>Se eliminarán los registros de asistencia de esta sesión.</p>
+                        <form method="post" action="{% url 'asistencias:delete' sesion.pk %}" class="d-flex flex-wrap gap-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="filtros" value="{{ request.GET.urlencode }}">
+                            <button class="btn btn-outline-light" type="button" autofocus onclick="this.closest('dialog').close()">Cancelar</button>
+                            <button class="btn btn-danger" type="submit">Confirmar eliminación</button>
+                        </form>
+                    </dialog>
+                    {% endif %}
                 </article>
             {% endfor %}
         </div>

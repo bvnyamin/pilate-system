@@ -113,11 +113,12 @@ class ClientePlan(models.Model):
         super().clean()
         errors = {}
         fecha_inicio_cambio = self._state.adding
+        plan_cambio = False
         if self.pk and not fecha_inicio_cambio:
-            fecha_inicio_anterior = type(self).objects.filter(pk=self.pk).values_list(
-                "fecha_inicio", flat=True
-            ).first()
-            fecha_inicio_cambio = fecha_inicio_anterior != self.fecha_inicio
+            anterior = type(self).objects.filter(pk=self.pk).values("fecha_inicio", "plan_id").first()
+            if anterior:
+                fecha_inicio_cambio = anterior["fecha_inicio"] != self.fecha_inicio
+                plan_cambio = anterior["plan_id"] != self.plan_id
 
         if self.fecha_inicio and fecha_inicio_cambio:
             self.fecha_fin = calcular_fecha_fin_mensual(self.fecha_inicio)
@@ -125,7 +126,7 @@ class ClientePlan(models.Model):
         if self.fecha_inicio and self.fecha_fin and self.fecha_fin < self.fecha_inicio:
             errors["fecha_fin"] = "La fecha de término no puede ser anterior al inicio."
 
-        if self._state.adding and self.plan_id and not self.precio_base_clp:
+        if self.plan_id and (plan_cambio or (self._state.adding and not self.precio_base_clp)):
             plan = Plan.objects.filter(pk=self.plan_id).only("precio_lista_clp").first()
             if plan:
                 self.precio_base_clp = plan.precio_lista_clp

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% load planes_formatters %}
+{% load planes_formatters static %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/mensualidades-list.css' %}?v=3">{% endblock %}
 {% block title %}Mensualidades{% endblock %}
 {% block content %}
 <section class="page-intro-row">
@@ -16,9 +17,9 @@
 <section class="content-card subscription-list-card">
     <div class="subscription-toolbar">
         <div class="client-status-tabs" role="group" aria-label="Filtrar mensualidades por estado">
-            <a class="status-tab{% if not selected_status %} active{% endif %}" href="{% url 'mensualidades:list' %}{% if search_query or selected_month or selected_year %}?{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}{% if selected_month %}mes={{ selected_month }}&amp;{% endif %}{% if selected_year %}anio={{ selected_year }}{% endif %}{% endif %}">Todas</a>
+            <a class="status-tab{% if not selected_status %} active{% endif %}" href="{% url 'mensualidades:list' %}{% querystring estado=None page=None %}">Todas</a>
             {% for value, label in estado_choices %}
-                <a class="status-tab{% if selected_status == value %} active{% endif %}" href="?estado={{ value }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}{% if selected_month %}&amp;mes={{ selected_month }}{% endif %}{% if selected_year %}&amp;anio={{ selected_year }}{% endif %}">{{ label }}</a>
+                <a class="status-tab{% if selected_status == value %} active{% endif %}" href="{% querystring estado=value page=None %}">{{ label }}</a>
             {% endfor %}
         </div>
         <form method="get" class="subscription-filters" role="search">
@@ -35,58 +36,68 @@
                 </select>
             </label>
             <label><span class="visually-hidden">Año</span><input class="form-control" type="number" name="anio" min="2000" max="32767" value="{{ selected_year }}" placeholder="Año" aria-label="Filtrar por año"></label>
-            <button class="btn btn-outline-light" type="submit">Filtrar</button>
+            <label><span class="visually-hidden">Ordenar por</span>
+                <select class="form-select" name="orden">
+                    <option value="periodo"{% if orden == "periodo" %} selected{% endif %}>Período reciente</option>
+                    <option value="clienta"{% if orden == "clienta" %} selected{% endif %}>Clienta A–Z</option>
+                    <option value="restantes"{% if orden == "restantes" %} selected{% endif %}>Menos clases restantes</option>
+                </select>
+            </label>
+            <button class="btn btn-outline-light" type="submit"><i class="bi bi-funnel" aria-hidden="true"></i> Filtrar</button>
         </form>
     </div>
 
     {% if mensualidades %}
-        <div class="subscription-grid">
+        <table class="subscription-table">
+            <thead><tr>
+                <th scope="col">Clienta</th><th scope="col">Plan</th><th scope="col">Vigencia</th>
+                <th scope="col">Clases restantes</th><th scope="col">Precio acordado</th>
+                <th scope="col">Estado</th><th scope="col">Acciones</th>
+            </tr></thead>
+            <tbody>
             {% for mensualidad in mensualidades %}
-                <article class="subscription-card">
-                    <div class="subscription-card-heading">
-                        <div>
-                            <span class="section-eyebrow">{{ mensualidad.periodo }}</span>
-                            <h3>{{ mensualidad.cliente.apellidos }}, {{ mensualidad.cliente.nombres }}</h3>
-                        </div>
+                <tr>
+                    <th scope="row">{{ mensualidad.cliente.apellidos }}, {{ mensualidad.cliente.nombres }}<small>{{ mensualidad.periodo }}</small></th>
+                    <td><i class="bi bi-activity" aria-hidden="true"></i> {{ mensualidad.plan.nombre }}</td>
+                    <td>{{ mensualidad.fecha_inicio|date:"d/m/Y" }}<small>al {{ mensualidad.fecha_fin|date:"d/m/Y" }}</small></td>
+                    <td>{% include "mensualidades/remaining.html" %}</td>
+                    <td><strong>{{ mensualidad.precio_final_clp|clp }}</strong>{% if mensualidad.descuento_porcentaje %}<small>{{ mensualidad.precio_base_clp|clp }} · −{{ mensualidad.descuento_porcentaje }}%</small>{% endif %}</td>
+                    <td><span class="status-badge status-{{ mensualidad.estado }}">{{ mensualidad.get_estado_display }}</span></td>
+                    <td>{% include "mensualidades/list_actions.html" %}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <div class="subscription-mobile-list">
+            {% for mensualidad in mensualidades %}
+                <details class="subscription-mobile-row">
+                    <summary>
+                        <strong>{{ mensualidad.cliente.apellidos }}, {{ mensualidad.cliente.nombres }}</strong>
                         <span class="status-badge status-{{ mensualidad.estado }}">{{ mensualidad.get_estado_display }}</span>
+                        <span><i class="bi bi-activity" aria-hidden="true"></i> {{ mensualidad.plan.nombre }} · {{ mensualidad.periodo }}</span>
+                        <strong>{{ mensualidad.precio_final_clp|clp }}</strong>
+                        {% include "mensualidades/remaining.html" %}
+                        <span class="subscription-expand">Detalle <i class="bi bi-chevron-down" aria-hidden="true"></i></span>
+                    </summary>
+                    <div class="subscription-mobile-detail">
+                        <p><i class="bi bi-calendar3" aria-hidden="true"></i> Vigencia: {{ mensualidad.fecha_inicio|date:"d/m/Y" }} – {{ mensualidad.fecha_fin|date:"d/m/Y" }}</p>
+                        {% if mensualidad.descuento_porcentaje %}<p>Precio lista: {{ mensualidad.precio_base_clp|clp }} · −{{ mensualidad.descuento_porcentaje }}%</p>{% endif %}
+                        {% include "mensualidades/list_actions.html" %}
                     </div>
-                    <div class="subscription-plan-line">
-                        <span class="subscription-plan-name"><i class="bi bi-activity" aria-hidden="true"></i>{{ mensualidad.plan.nombre }} · {{ mensualidad.plan.clases_por_mes }} clases</span>
-                        <span class="subscription-remaining-count{% if not mensualidad.clases_restantes %} is-empty{% endif %}" aria-label="{{ mensualidad.clases_restantes }} clases restantes de {{ mensualidad.plan.clases_por_mes }}">
-                            <i class="bi bi-check2-circle" aria-hidden="true"></i>
-                            <strong>{{ mensualidad.clases_restantes }}</strong>
-                            <span>/ {{ mensualidad.plan.clases_por_mes }} restantes</span>
-                        </span>
-                    </div>
-                    <dl class="subscription-facts">
-                        <div><dt>Vigencia</dt><dd>{{ mensualidad.fecha_inicio|date:"d/m/Y" }} – {{ mensualidad.fecha_fin|date:"d/m/Y" }}</dd></div>
-                        <div><dt>Precio acordado</dt><dd>{{ mensualidad.precio_final_clp|clp }}</dd></div>
-                        {% if mensualidad.descuento_porcentaje %}<div><dt>Precio lista</dt><dd>{{ mensualidad.precio_base_clp|clp }} <span class="subscription-discount">−{{ mensualidad.descuento_porcentaje }}%</span></dd></div>{% endif %}
-                    </dl>
-                    <div class="subscription-actions">
-                        <a class="btn btn-outline-light" href="{% url 'mensualidades:update' mensualidad.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</a>
-                        {% if mensualidad.estado == 'vigente' %}
-                            <form method="post" action="{% url 'mensualidades:set_status' mensualidad.pk %}">
-                                {% csrf_token %}<input type="hidden" name="estado" value="finalizado">
-                                <button class="btn btn-quiet" type="submit" aria-label="Finalizar mensualidad de {{ mensualidad.cliente }}">Finalizar</button>
-                            </form>
-                        {% elif mensualidad.estado == 'finalizado' %}
-                            <form method="post" action="{% url 'mensualidades:set_status' mensualidad.pk %}">
-                                {% csrf_token %}<input type="hidden" name="estado" value="vigente">
-                                <button class="btn btn-quiet" type="submit" aria-label="Reactivar mensualidad de {{ mensualidad.cliente }}">Reactivar</button>
-                            </form>
-                        {% endif %}
-                    </div>
-                </article>
+                </details>
             {% endfor %}
         </div>
         <div class="client-list-footer">
-            <span>{{ total_mensualidades }} resultado{{ total_mensualidades|pluralize:"s" }}</span>
+            <span>Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ paginator.count }}</span>
             {% if is_paginated %}
                 <nav class="pagination-nav" aria-label="Paginación de mensualidades">
-                    {% if page_obj.has_previous %}<a href="?{% if selected_status %}estado={{ selected_status }}&amp;{% endif %}{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}{% if selected_month %}mes={{ selected_month }}&amp;{% endif %}{% if selected_year %}anio={{ selected_year }}&amp;{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Página anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>{% endif %}
-                    <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
-                    {% if page_obj.has_next %}<a href="?{% if selected_status %}estado={{ selected_status }}&amp;{% endif %}{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}{% if selected_month %}mes={{ selected_month }}&amp;{% endif %}{% if selected_year %}anio={{ selected_year }}&amp;{% endif %}page={{ page_obj.next_page_number }}" aria-label="Página siguiente"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>{% endif %}
+                    {% if page_obj.has_previous %}<a href="{% querystring page=page_obj.previous_page_number %}" aria-label="Página anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>{% endif %}
+                    {% for numero in paginas %}
+                        {% if numero == paginator.ELLIPSIS %}<span>{{ numero }}</span>
+                        {% elif numero == page_obj.number %}<span aria-current="page">{{ numero }}</span>
+                        {% else %}<a href="{% querystring page=numero %}" aria-label="Página {{ numero }}">{{ numero }}</a>{% endif %}
+                    {% endfor %}
+                    {% if page_obj.has_next %}<a href="{% querystring page=page_obj.next_page_number %}" aria-label="Página siguiente"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>{% endif %}
                 </nav>
             {% endif %}
         </div>

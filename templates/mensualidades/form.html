@@ -2,7 +2,7 @@
 {% block title %}{{ page_title }}{% endblock %}
 {% block content %}
 <div class="form-page-wrap">
-    <a class="back-link" href="{% url 'mensualidades:list' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mensualidades</a>
+    <a class="back-link" href="{% url 'mensualidades:list' %}{% if mensualidad %}{% querystring %}{% endif %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mensualidades</a>
     <section class="page-intro-row form-page-heading">
         <div>
             <span class="section-eyebrow">Contratación mensual</span>
@@ -85,7 +85,7 @@
             </div>
         </div>
         <div class="form-actions">
-            <a class="btn btn-outline-light" href="{% url 'mensualidades:list' %}">Cancelar</a>
+            <a class="btn btn-outline-light" href="{% url 'mensualidades:list' %}{% if mensualidad %}{% querystring %}{% endif %}">Cancelar</a>
             <button class="btn btn-primary" type="submit"><i class="bi bi-check2" aria-hidden="true"></i> Guardar mensualidad</button>
         </div>
     </form>

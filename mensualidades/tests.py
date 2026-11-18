@@ -173,6 +173,19 @@ class ClientePlanViewsTests(TestCase):
             with self.subTest(route=route):
                 self.assertRedirects(self.client.get(route), f"{reverse('login')}?next={route}")
 
+    def test_editar_plan_actualiza_precio_acordado(self):
+        mensualidad = self.crear_mensualidad()
+        plan_nuevo = Plan.objects.create(nombre="Cambio de plan", clases_por_mes=12, precio_lista_clp=110000)
+        response = self.client.post(
+            reverse("mensualidades:update", args=[mensualidad.pk]),
+            self.datos_formulario(plan=plan_nuevo.pk, descuento_porcentaje="10"),
+        )
+        self.assertEqual(response.status_code, 302)
+        mensualidad.refresh_from_db()
+        self.assertEqual(mensualidad.plan_id, plan_nuevo.pk)
+        self.assertEqual(mensualidad.precio_base_clp, 110000)
+        self.assertEqual(mensualidad.precio_final_clp, 99000)
+
     def crear_mensualidad(self):
         return ClientePlan.objects.create(
             cliente=self.cliente,

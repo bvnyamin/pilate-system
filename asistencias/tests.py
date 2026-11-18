@@ -102,6 +102,27 @@ class AsistenciaModelTests(TestCase):
 
 
 class AsistenciaViewsTests(TestCase):
+    def test_eliminar_sesion_devuelve_clase(self):
+        asistencia = Asistencia.objects.create(
+            sesion=self.sesion, cliente_plan=self.mensualidad, estado=Asistencia.Estado.PRESENTE,
+        )
+        restantes = self.mensualidad.clases_restantes
+        url = reverse("asistencias:delete", args=[self.sesion.pk])
+        self.assertEqual(self.client.post(url).status_code, 403)
+        self.usuario.is_staff = True
+        self.usuario.save(update_fields=["is_staff"])
+        self.assertContains(self.client.get(url), "Eliminar sesión")
+        self.assertTrue(Sesion.objects.filter(pk=self.sesion.pk).exists())
+        filtros = "fecha=2026-09-15&q=Pilates"
+        self.assertRedirects(
+            self.client.post(url, {"filtros": filtros}),
+            f"{reverse('asistencias:list')}?{filtros}",
+        )
+        self.assertFalse(Sesion.objects.filter(pk=self.sesion.pk).exists())
+        self.assertFalse(Asistencia.objects.filter(pk=asistencia.pk).exists())
+        self.mensualidad.refresh_from_db()
+        self.assertEqual(self.mensualidad.clases_restantes, restantes + 1)
+
     @classmethod
     def setUpTestData(cls):
         cls.cliente = Cliente.objects.create(
@@ -266,6 +287,13 @@ class AsistenciaViewsTests(TestCase):
 
         target_page = self.client.get(destino_url)
         self.assertContains(target_page, "Recuperó (usar clase pendiente)")
+        sesion_anterior = Sesion.objects.create(fecha=date(2026, 9, 14), hora=time(8, 0))
+        anterior = Asistencia.objects.create(
+            sesion=sesion_anterior, cliente_plan=self.mensualidad,
+            estado=Asistencia.Estado.CANCELO, motivo_cancelacion="Avisó a tiempo",
+            fecha_aviso_cancelacion=timezone.make_aware(datetime(2026, 9, 14, 3, 0)),
+        )
+        credito_anterior = RecuperacionClase.objects.create(asistencia_origen=anterior)
         response = self.client.post(destino_url, {
             "form-TOTAL_FORMS": "1", "form-INITIAL_FORMS": "1",
             "form-0-cliente_plan": str(self.mensualidad.pk),
@@ -279,6 +307,11 @@ class AsistenciaViewsTests(TestCase):
         usado = Asistencia.objects.get(sesion=destino, cliente_plan=self.mensualidad)
         self.assertEqual(usado.estado, Asistencia.Estado.RECUPERACION)
         self.assertEqual(usado.recuperacion_utilizada.estado, RecuperacionClase.Estado.UTILIZADA)
+        self.assertEqual(usado.recuperacion_utilizada.pk, credito_anterior.pk)
+        self.assertEqual(
+            RecuperacionClase.objects.get(asistencia_origen__sesion=origen).estado,
+            RecuperacionClase.Estado.PENDIENTE,
+        )
         self.mensualidad.refresh_from_db()
         self.assertEqual(self.mensualidad.clases_utilizadas, 0)
         self.assertEqual(self.mensualidad.clases_restantes, 8)

@@ -10,4 +10,5 @@ urlpatterns = [
     path("horarios/", views.HorarioEstudioUpdateView.as_view(), name="schedule_settings"),
     path("nueva/", views.SesionCreateView.as_view(), name="create"),
     path("<int:pk>/", views.SesionRosterView.as_view(), name="roster"),
+    path("<int:pk>/eliminar/", views.SesionDeleteView.as_view(), name="delete"),
 ]

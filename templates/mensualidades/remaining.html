@@ -1,0 +1,5 @@
+<span class="subscription-remaining-count{% if not mensualidad.clases_restantes %} is-empty{% endif %}" aria-label="{{ mensualidad.clases_restantes }} clases restantes de {{ mensualidad.plan.clases_por_mes }}">
+    <i class="bi bi-check2-circle" aria-hidden="true"></i>
+    <strong>{{ mensualidad.clases_restantes }}</strong>
+    <span>/ {{ mensualidad.plan.clases_por_mes }} restantes</span>
+</span>

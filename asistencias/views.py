@@ -1,4 +1,5 @@
 from datetime import date
+from urllib.parse import parse_qsl, urlencode
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -11,6 +12,7 @@ from django.utils import timezone
 from django.views.generic import CreateView, ListView, UpdateView, View
 from django.utils.dateparse import parse_date
 
+from config.pagination import ListPaginator
 from mensualidades.models import ClientePlan
 
 from .forms import AsistenciaFormSet, AsistenciaRowForm, HorarioEstudioForm, SesionForm
@@ -23,6 +25,7 @@ class SesionListView(LoginRequiredMixin, ListView):
     template_name = "asistencias/list.html"
     context_object_name = "sesiones"
     paginate_by = 12
+    paginator_class = ListPaginator
 
     def get_queryset(self):
         selected_date = self.request.GET.get("fecha", "").strip()
@@ -94,6 +97,59 @@ class SesionCreateView(LoginRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse("asistencias:roster", kwargs={"pk": self.object.pk})
+
+
+class SesionDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get(self, request, pk):
+        sesion = get_object_or_404(Sesion, pk=pk)
+        return render(request, "asistencias/session_delete.html", {"sesion": sesion})
+
+    @transaction.atomic
+    def post(self, request, pk):
+        sesion = get_object_or_404(Sesion.objects.select_for_update(), pk=pk)
+        filtros = urlencode([
+            (clave, valor) for clave, valor in parse_qsl(request.POST.get("filtros", ""))
+            if clave in {"fecha", "q", "estado", "bloque", "todas", "page"}
+        ])
+        destino = reverse("asistencias:list") + (f"?{filtros}" if filtros else "")
+        asistencias = sesion.asistencias.all()
+        planes_presentes = asistencias.filter(estado=Asistencia.Estado.PRESENTE).values("cliente_plan_id")
+        creditos_invalidados = list(RecuperacionClase.objects.filter(
+            estado=RecuperacionClase.Estado.INVALIDADA,
+            asistencia_origen__cliente_plan_id__in=planes_presentes,
+            asistencia_origen__sesion__fecha=sesion.fecha,
+            asistencia_origen__sesion__hora__lt=sesion.hora,
+        ).select_related("asistencia_origen__sesion"))
+        recuperaciones = RecuperacionClase.objects.filter(
+            asistencia_origen__sesion=sesion,
+        )
+        if (
+            recuperaciones.filter(asistencia_recuperacion__isnull=False)
+            .exclude(asistencia_recuperacion__sesion=sesion).exists()
+        ):
+            messages.error(request, "Esta sesión originó una recuperación usada en otra sesión. Corrige esa asistencia antes de eliminarla.")
+            return redirect(destino)
+        RecuperacionClase.objects.filter(
+            asistencia_recuperacion__sesion=sesion,
+        ).exclude(asistencia_origen__sesion=sesion).update(
+            asistencia_recuperacion=None, estado=RecuperacionClase.Estado.PENDIENTE,
+        )
+        recuperaciones.delete()
+        asistencias.delete()
+        sesion.delete()
+        for credito in creditos_invalidados:
+            origen = credito.asistencia_origen
+            if origen.genera_recuperacion and not Asistencia.objects.filter(
+                cliente_plan_id=origen.cliente_plan_id, estado=Asistencia.Estado.PRESENTE,
+                sesion__fecha=origen.sesion.fecha, sesion__hora__gt=origen.sesion.hora,
+            ).exists():
+                credito.estado = RecuperacionClase.Estado.PENDIENTE
+                credito.save(update_fields=["estado"])
+        messages.success(request, "Sesión eliminada y clases restantes actualizadas.")
+        return redirect(destino)
 
 
 class HorariosDisponiblesView(LoginRequiredMixin, View):
@@ -278,6 +334,29 @@ class SesionRosterView(LoginRequiredMixin, View):
                 if invalid:
                     return self.render_to_response(request, sesion, roster, formset)
                 with transaction.atomic():
+                    get_object_or_404(Sesion.objects.select_for_update(), pk=sesion.pk)
+                    creditos = {}
+                    for form in formset:
+                        values = form.cleaned_data
+                        if values["estado"] != Asistencia.Estado.RECUPERACION:
+                            continue
+                        plan = values["cliente_plan"]
+                        if RecuperacionClase.objects.filter(
+                            asistencia_recuperacion__sesion=sesion,
+                            asistencia_recuperacion__cliente_plan=plan,
+                            estado=RecuperacionClase.Estado.UTILIZADA,
+                        ).exists():
+                            continue
+                        credito = RecuperacionClase.objects.select_for_update(of=("self",)).filter(
+                            asistencia_origen__cliente_plan=plan,
+                            asistencia_origen__sesion__fecha__year=sesion.fecha.year,
+                            asistencia_origen__sesion__fecha__month=sesion.fecha.month,
+                            estado=RecuperacionClase.Estado.PENDIENTE,
+                        ).order_by("asistencia_origen__sesion__fecha", "asistencia_origen__sesion__hora", "pk").first()
+                        if credito is None:
+                            form.add_error("estado", "La recuperación ya no está disponible. Recarga la sesión.")
+                            return self.render_to_response(request, sesion, roster, formset)
+                        creditos[plan.pk] = credito
                     for form in formset:
                         values = form.cleaned_data
                         state = values["estado"]
@@ -292,14 +371,8 @@ class SesionRosterView(LoginRequiredMixin, View):
                             },
                         )
                         if state == Asistencia.Estado.RECUPERACION:
-                            ya_usada = RecuperacionClase.objects.filter(asistencia_recuperacion=asistencia, estado=RecuperacionClase.Estado.UTILIZADA).exists()
-                            if not ya_usada:
-                                recuperacion = RecuperacionClase.objects.select_for_update().get(
-                                    asistencia_origen__cliente_plan=values["cliente_plan"],
-                                    asistencia_origen__sesion__fecha__year=sesion.fecha.year,
-                                    asistencia_origen__sesion__fecha__month=sesion.fecha.month,
-                                    estado=RecuperacionClase.Estado.PENDIENTE,
-                                )
+                            recuperacion = creditos.get(values["cliente_plan"].pk)
+                            if recuperacion:
                                 recuperacion.estado = RecuperacionClase.Estado.UTILIZADA
                                 recuperacion.asistencia_recuperacion = asistencia
                                 recuperacion.save()

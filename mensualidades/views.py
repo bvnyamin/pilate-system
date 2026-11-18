@@ -1,21 +1,41 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Q
+from django.db import transaction
+from django.db.models import Count, Exists, F, OuterRef, Q
+from django.db.models.functions import Greatest
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView
 
+from asistencias.models import Asistencia
+from config.pagination import ListPaginator
+from pagos.models import Cuota, Pago
+
 from .forms import ClientePlanForm
 from .models import ClientePlan
+
+
+def url_lista_mensualidades(request):
+    filtros = request.GET.copy()
+    for clave in set(filtros) - {"q", "estado", "mes", "anio", "orden", "page"}:
+        del filtros[clave]
+    url = reverse("mensualidades:list")
+    return f"{url}?{filtros.urlencode()}" if filtros else url
 
 
 class ClientePlanListView(LoginRequiredMixin, ListView):
     model = ClientePlan
     template_name = "mensualidades/list.html"
     context_object_name = "mensualidades"
-    paginate_by = 12
+    paginate_by = 20
+    paginator_class = ListPaginator
+    orderings = {
+        "periodo": ("-periodo_anio", "-periodo_mes", "cliente__apellidos", "cliente__nombres"),
+        "clienta": ("cliente__apellidos", "cliente__nombres", "-periodo_anio", "-periodo_mes"),
+        "restantes": ("remaining_count", "-periodo_anio", "-periodo_mes", "cliente__apellidos"),
+    }
 
     def get_queryset(self):
         queryset = ClientePlan.objects.select_related("cliente", "plan").annotate(
@@ -24,7 +44,16 @@ class ClientePlanListView(LoginRequiredMixin, ListView):
                 filter=Q(asistencias__estado__in=("presente", "ausente")),
                 distinct=True,
             )
-        ).order_by("-periodo_anio", "-periodo_mes", "-fecha_inicio", "-pk")
+        ).annotate(
+            remaining_count=Greatest(F("plan__clases_por_mes") - F("present_count"), 0),
+            tiene_movimientos=(
+                Exists(Pago.objects.filter(cliente_plan_id=OuterRef("pk")))
+                | Exists(Cuota.objects.filter(cliente_plan_id=OuterRef("pk")))
+                | Exists(Asistencia.objects.filter(cliente_plan_id=OuterRef("pk")))
+            ),
+        )
+        orden = self.orderings.get(self.request.GET.get("orden"), self.orderings["periodo"])
+        queryset = queryset.order_by(*orden, "-pk")
         search = self.request.GET.get("q", "").strip()
         estado = self.request.GET.get("estado", "").strip()
         mes = self.request.GET.get("mes", "").strip()
@@ -53,7 +82,9 @@ class ClientePlanListView(LoginRequiredMixin, ListView):
                 "selected_status": self.request.GET.get("estado", "").strip(),
                 "selected_month": self.request.GET.get("mes", "").strip(),
                 "selected_year": self.request.GET.get("anio", "").strip(),
-                "total_mensualidades": self.get_queryset().count(),
+                "orden": self.request.GET.get("orden", "periodo"),
+                "total_mensualidades": context["paginator"].count,
+                "paginas": context["paginator"].get_elided_page_range(context["page_obj"].number, on_each_side=1),
                 "estado_choices": ClientePlan.Estado.choices,
                 "month_choices": ClientePlanForm.MESES,
             }
@@ -83,13 +114,40 @@ class ClientePlanUpdateView(LoginRequiredMixin, UpdateView):
     context_object_name = "mensualidad"
     extra_context = {"page_title": "Editar mensualidad", "form_title": "Editar mensualidad"}
 
+    def get_object(self, queryset=None):
+        queryset = self.get_queryset() if queryset is None else queryset
+        if self.request.method == "POST":
+            queryset = queryset.select_for_update()
+        return super().get_object(queryset)
+
+    def get(self, request, *args, **kwargs):
+        mensualidad = self.get_object()
+        if self.tiene_movimientos(mensualidad):
+            return self.edicion_bloqueada()
+        return super().get(request, *args, **kwargs)
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        mensualidad = self.get_object()
+        if self.tiene_movimientos(mensualidad):
+            return self.edicion_bloqueada()
+        return super().post(request, *args, **kwargs)
+
+    @staticmethod
+    def tiene_movimientos(mensualidad):
+        return mensualidad.pagos.exists() or mensualidad.cuotas.exists() or mensualidad.asistencias.exists()
+
+    def edicion_bloqueada(self):
+        messages.warning(self.request, "Esta mensualidad ya tiene movimientos registrados. Para cambiar de plan, asigna uno en la mensualidad del próximo período.")
+        return redirect(url_lista_mensualidades(self.request))
+
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, f"Se actualizó la mensualidad de {self.object.cliente} para {self.object.periodo}.")
         return response
 
     def get_success_url(self):
-        return reverse("mensualidades:list")
+        return url_lista_mensualidades(self.request)
 
 
 class ClientePlanSetStatusView(LoginRequiredMixin, View):
@@ -104,4 +162,4 @@ class ClientePlanSetStatusView(LoginRequiredMixin, View):
         mensualidad.estado = estado
         mensualidad.save(update_fields=["estado", "updated_at"])
         messages.success(request, f"La mensualidad de {mensualidad.cliente} quedó {mensualidad.get_estado_display().lower()}.")
-        return redirect("mensualidades:list")
+        return redirect(url_lista_mensualidades(request))

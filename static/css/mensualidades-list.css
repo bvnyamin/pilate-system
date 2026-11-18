@@ -1,0 +1,44 @@
+.subscription-table { width: 100%; border-collapse: collapse; }
+.subscription-table thead { background: var(--aldra-card); }
+.subscription-table th, .subscription-table td {
+    padding: .8rem .6rem;
+    text-align: left;
+    border-bottom: 1px solid var(--aldra-border-soft);
+}
+
+.subscription-table small { display: block; margin-top: .25rem; opacity: .75; }
+.subscription-table .subscription-actions { border: 0; padding: 0; flex-wrap: wrap; }
+.subscription-mobile-list { display: none; }
+.subscription-list-card .pagination-nav { gap: .4rem; flex-wrap: wrap; }
+.subscription-list-card [aria-current="page"] { color: var(--aldra-primary-soft); padding: .4rem; font-weight: 700; }
+@media (max-width: 1199px) {
+    .subscription-filters { flex-wrap: wrap; }
+    .subscription-filters .subscription-search { flex-basis: 100%; min-width: 0; }
+    .subscription-table { display: none; }
+    .subscription-mobile-list { display: grid; gap: .65rem; }
+    .subscription-mobile-row {
+        border: 1px solid var(--aldra-border-soft);
+        border-radius: var(--aldra-radius-sm);
+        background: var(--aldra-card);
+    }
+    .subscription-mobile-row summary {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: .45rem .7rem;
+        padding: .8rem;
+        cursor: pointer;
+        overflow-wrap: anywhere;
+    }
+    .subscription-mobile-row summary::-webkit-details-marker { display: none; }
+    .subscription-mobile-row summary > :nth-child(even) { justify-self: end; }
+    .subscription-mobile-row .subscription-remaining-count { justify-self: start; }
+    .subscription-expand { font-size: .85rem; }
+    .subscription-mobile-row[open] .subscription-expand i { display: inline-block; transform: rotate(180deg); }
+    .subscription-mobile-detail { padding: 0 .8rem .8rem; }
+    .subscription-list-card .client-list-footer { flex-wrap: wrap; gap: .65rem; }
+}
+@media (max-width: 575.98px) {
+    .subscription-filters { flex-wrap: nowrap; }
+    .subscription-filters .subscription-search { flex-basis: auto; }
+}

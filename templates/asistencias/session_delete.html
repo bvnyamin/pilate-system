@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Eliminar sesión{% endblock %}
+{% block content %}
+<section class="content-card">
+    <h2>Eliminar sesión</h2>
+    <p>{{ sesion.nombre }} · {{ sesion.fecha|date:"d/m/Y" }} a las {{ sesion.hora|time:"H:i" }}</p>
+    <p>Se eliminarán las asistencias de esta sesión y se actualizarán las clases restantes.</p>
+    <form method="post" class="d-flex flex-wrap gap-2">
+        {% csrf_token %}
+        <a class="btn btn-outline-light" href="{% url 'asistencias:list' %}">Cancelar</a>
+        <button class="btn btn-danger" type="submit">Eliminar sesión</button>
+    </form>
+</section>
+{% endblock %}
